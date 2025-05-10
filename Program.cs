@@ -39,7 +39,7 @@ namespace sgi_app
                     { "4", "Panel de Proveedores    - Administración de proveedores" },
                     { "5", "Panel de Terceros       - Gestión de personas y entidades" },
                     { "6", "Panel de Ventas         - Registro y seguimiento de ventas" },
-                    { "7", "Panel de Movimientos    - Control de movimientos de caja" },
+                    { "7", "Panel de Movimientos    - Control de movimientos en caja" },
                     { "8", "Detalles de Ventas      - Gestión de líneas de venta" },
                     { "9", "Detalles de Compras     - Gestión de líneas de compra" }
                 };
