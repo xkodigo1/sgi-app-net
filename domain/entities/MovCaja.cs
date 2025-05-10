@@ -1,17 +1,25 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace sgi_app.domain.entities
 {
+    [Table("MovCaja")]
     public class MovCaja
     {
+        [Key]
         public int Id { get; set; }
+        
         public DateTime Fecha { get; set; }
-        public int TipoMov { get; set; } // Foreign key
+        
+        [Column("TipoMov")]
+        public int TipoMovId { get; set; }
+        
         public decimal Valor { get; set; }
+        
         public string Concepto { get; set; }
-        public string TerceroId { get; set; } // Foreign key
+        
+        [Column("Tercero_id")]
+        public string TerceroId { get; set; }
     }
 }

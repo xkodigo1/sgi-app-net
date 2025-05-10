@@ -20,13 +20,17 @@ namespace sgi_app.application.ui
         {
             while (true)
             {
-                Console.WriteLine("=== Panel de Productos ===");
-                Console.WriteLine("1. Listar Productos");
-                Console.WriteLine("2. Crear Producto");
-                Console.WriteLine("3. Editar Producto");
-                Console.WriteLine("4. Eliminar Producto");
-                Console.WriteLine("5. Salir");
-                Console.Write("Seleccione una opción: ");
+                UIHelper.MostrarTitulo("Panel de Productos");
+                
+                var opciones = new Dictionary<string, string>
+                {
+                    { "1", "Listar Productos" },
+                    { "2", "Crear Nuevo Producto" },
+                    { "3", "Editar Producto" },
+                    { "4", "Eliminar Producto" }
+                };
+                
+                UIHelper.MostrarMenuOpciones(opciones);
 
                 var option = Console.ReadLine();
 
@@ -44,10 +48,11 @@ namespace sgi_app.application.ui
                     case "4":
                         EliminarProducto();
                         break;
-                    case "5":
+                    case "0":
                         return;
                     default:
-                        Console.WriteLine("Opción no válida. Intente de nuevo.");
+                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        Console.ReadKey();
                         break;
                 }
             }
@@ -55,81 +60,201 @@ namespace sgi_app.application.ui
 
         private void ListarProductos()
         {
-            var productos = _context.Productos.ToList();
-            foreach (var producto in productos)
+            UIHelper.MostrarTitulo("Listado de Productos");
+            
+            try
             {
-                Console.WriteLine($"ID: {producto.Id}, Nombre: {producto.Nombre}, Stock: {producto.Stock}, StockMin: {producto.StockMin}, StockMax: {producto.StockMax}");
+                var productos = _context.Productos.ToList();
+                
+                // Definir las columnas y los valores a mostrar
+                var columnas = new Dictionary<string, Func<Producto, object>>
+                {
+                    { "ID", p => p.Id },
+                    { "Nombre", p => p.Nombre },
+                    { "Stock", p => p.Stock },
+                    { "Stock Mín", p => p.StockMin },
+                    { "Stock Máx", p => p.StockMax },
+                    { "Código Barras", p => p.Barcode ?? "No registrado" },
+                    { "Estado", p => ObtenerEstadoStock(p) }
+                };
+                
+                // Usar el método DibujarTabla para mostrar los datos formateados
+                UIHelper.DibujarTabla(productos, columnas, "Inventario de Productos");
+                
+                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                Console.ReadKey();
             }
+            catch (Exception ex)
+            {
+                UIHelper.MostrarError("Error al listar los productos", ex);
+            }
+        }
+        
+        // Método auxiliar para determinar el estado del stock
+        private string ObtenerEstadoStock(Producto producto)
+        {
+            if (producto.Stock <= producto.StockMin)
+                return "⚠️ Bajo mínimo";
+            else if (producto.Stock >= producto.StockMax)
+                return "⚠️ Sobre máximo";
+            else
+                return "✓ Normal";
         }
 
         private void CrearProducto()
         {
-            Console.Write("Ingrese el ID del producto: ");
-            var id = Console.ReadLine();
-            Console.Write("Ingrese el nombre del producto: ");
-            var nombre = Console.ReadLine();
-            Console.Write("Ingrese el stock: ");
-            var stock = int.Parse(Console.ReadLine());
-            Console.Write("Ingrese el stock mínimo: ");
-            var stockMin = int.Parse(Console.ReadLine());
-            Console.Write("Ingrese el stock máximo: ");
-            var stockMax = int.Parse(Console.ReadLine());
-            Console.Write("Ingrese el código de barras: ");
-            var barcode = Console.ReadLine();
+            UIHelper.MostrarTitulo("Crear Nuevo Producto");
+            
+            try
+            {
+                var id = UIHelper.SolicitarEntrada("Ingrese el ID del producto");
+                
+                // Verificar que no exista ya un producto con este ID
+                var productoExistente = _context.Productos.Find(id);
+                if (productoExistente != null)
+                {
+                    UIHelper.MostrarError($"Ya existe un producto con el ID {id}.");
+                    return;
+                }
+                
+                var nombre = UIHelper.SolicitarEntrada("Ingrese el nombre del producto");
+                var stockStr = UIHelper.SolicitarEntrada("Ingrese el stock inicial");
+                var stockMinStr = UIHelper.SolicitarEntrada("Ingrese el stock mínimo");
+                var stockMaxStr = UIHelper.SolicitarEntrada("Ingrese el stock máximo");
+                var barcode = UIHelper.SolicitarEntrada("Ingrese el código de barras (opcional)");
+                
+                var stock = int.Parse(stockStr);
+                var stockMin = int.Parse(stockMinStr);
+                var stockMax = int.Parse(stockMaxStr);
 
-            var producto = new Producto { Id = id, Nombre = nombre, Stock = stock, StockMin = stockMin, StockMax = stockMax, Barcode = barcode };
-            _context.Productos.Add(producto);
-            _context.SaveChanges();
-
-            Console.WriteLine("Producto creado exitosamente.");
+                var producto = new Producto { 
+                    Id = id, 
+                    Nombre = nombre, 
+                    Stock = stock, 
+                    StockMin = stockMin, 
+                    StockMax = stockMax, 
+                    Barcode = string.IsNullOrEmpty(barcode) ? null : barcode 
+                };
+                
+                // Mostrar resumen antes de confirmar
+                UIHelper.MostrarTitulo("Resumen del Producto");
+                Console.WriteLine($"ID: {producto.Id}");
+                Console.WriteLine($"Nombre: {producto.Nombre}");
+                Console.WriteLine($"Stock: {producto.Stock}");
+                Console.WriteLine($"Stock Min: {producto.StockMin}");
+                Console.WriteLine($"Stock Max: {producto.StockMax}");
+                Console.WriteLine($"Código de Barras: {producto.Barcode ?? "No registrado"}");
+                
+                if (UIHelper.Confirmar("¿Desea guardar este producto?"))
+                {
+                    _context.Productos.Add(producto);
+                    _context.SaveChanges();
+                    UIHelper.MostrarExito("Producto creado exitosamente.");
+                }
+                else
+                {
+                    UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                }
+            }
+            catch (Exception ex)
+            {
+                UIHelper.MostrarError("Error al crear el producto", ex);
+            }
         }
 
         private void EditarProducto()
         {
-            Console.Write("Ingrese el ID del producto a editar: ");
-            var id = Console.ReadLine();
-            var producto = _context.Productos.Find(id);
-
-            if (producto != null)
+            UIHelper.MostrarTitulo("Editar Producto");
+            
+            try
             {
-                Console.Write("Ingrese el nuevo nombre del producto: ");
-                producto.Nombre = Console.ReadLine();
-                Console.Write("Ingrese el nuevo stock: ");
-                producto.Stock = int.Parse(Console.ReadLine());
-                Console.Write("Ingrese el nuevo stock mínimo: ");
-                producto.StockMin = int.Parse(Console.ReadLine());
-                Console.Write("Ingrese el nuevo stock máximo: ");
-                producto.StockMax = int.Parse(Console.ReadLine());
-                Console.Write("Ingrese el nuevo código de barras: ");
-                producto.Barcode = Console.ReadLine();
+                var id = UIHelper.SolicitarEntrada("Ingrese el ID del producto a editar");
+                var producto = _context.Productos.Find(id);
 
-                _context.Update(producto);
-                _context.SaveChanges();
+                if (producto != null)
+                {
+                    // Mostrar información actual
+                    UIHelper.MostrarTitulo("Información Actual");
+                    Console.WriteLine($"ID: {producto.Id}");
+                    Console.WriteLine($"Nombre: {producto.Nombre}");
+                    Console.WriteLine($"Stock: {producto.Stock}");
+                    Console.WriteLine($"Stock Min: {producto.StockMin}");
+                    Console.WriteLine($"Stock Max: {producto.StockMax}");
+                    Console.WriteLine($"Código de Barras: {producto.Barcode ?? "No registrado"}");
+                    Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
+                    
+                    var nombre = UIHelper.SolicitarEntrada("Nuevo nombre", producto.Nombre);
+                    var stockStr = UIHelper.SolicitarEntrada("Nuevo stock", producto.Stock.ToString());
+                    var stockMinStr = UIHelper.SolicitarEntrada("Nuevo stock mínimo", producto.StockMin.ToString());
+                    var stockMaxStr = UIHelper.SolicitarEntrada("Nuevo stock máximo", producto.StockMax.ToString());
+                    var barcode = UIHelper.SolicitarEntrada("Nuevo código de barras", producto.Barcode ?? "");
+                    
+                    producto.Nombre = nombre;
+                    producto.Stock = int.Parse(stockStr);
+                    producto.StockMin = int.Parse(stockMinStr);
+                    producto.StockMax = int.Parse(stockMaxStr);
+                    producto.Barcode = string.IsNullOrEmpty(barcode) ? null : barcode;
 
-                Console.WriteLine("Producto actualizado exitosamente.");
+                    if (UIHelper.Confirmar("¿Confirma estos cambios?"))
+                    {
+                        _context.Update(producto);
+                        _context.SaveChanges();
+                        UIHelper.MostrarExito("Producto actualizado exitosamente.");
+                    }
+                    else
+                    {
+                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                    }
+                }
+                else
+                {
+                    UIHelper.MostrarError("Producto no encontrado.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Producto no encontrado.");
+                UIHelper.MostrarError("Error al actualizar el producto", ex);
             }
         }
 
         private void EliminarProducto()
         {
-            Console.Write("Ingrese el ID del producto a eliminar: ");
-            var id = Console.ReadLine();
-            var producto = _context.Productos.Find(id);
-
-            if (producto != null)
+            UIHelper.MostrarTitulo("Eliminar Producto");
+            
+            try
             {
-                _context.Productos.Remove(producto);
-                _context.SaveChanges();
+                var id = UIHelper.SolicitarEntrada("Ingrese el ID del producto a eliminar");
+                var producto = _context.Productos.Find(id);
 
-                Console.WriteLine("Producto eliminado exitosamente.");
+                if (producto != null)
+                {
+                    // Mostrar información a eliminar
+                    UIHelper.MostrarTitulo("Información del Producto a Eliminar");
+                    Console.WriteLine($"ID: {producto.Id}");
+                    Console.WriteLine($"Nombre: {producto.Nombre}");
+                    Console.WriteLine($"Stock: {producto.Stock}");
+                    Console.WriteLine($"Stock Min: {producto.StockMin}");
+                    Console.WriteLine($"Stock Max: {producto.StockMax}");
+                    
+                    if (UIHelper.Confirmar("¿Está seguro que desea eliminar este producto?"))
+                    {
+                        _context.Productos.Remove(producto);
+                        _context.SaveChanges();
+                        UIHelper.MostrarExito("Producto eliminado exitosamente.");
+                    }
+                    else
+                    {
+                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                    }
+                }
+                else
+                {
+                    UIHelper.MostrarError("Producto no encontrado.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Producto no encontrado.");
+                UIHelper.MostrarError("Error al eliminar el producto", ex);
             }
         }
     }

@@ -63,70 +63,171 @@ namespace sgi_app.application.ui
 
         private void CrearEmpleado()
         {
-            Console.Write("Ingrese el ID del tercero: ");
-            var terceroId = Console.ReadLine();
-            Console.Write("Ingrese la fecha de ingreso (YYYY-MM-DD): ");
-            var fechaIngreso = DateTime.Parse(Console.ReadLine());
-            Console.Write("Ingrese el salario base: ");
-            var salarioBase = double.Parse(Console.ReadLine());
-            Console.Write("Ingrese el ID de la EPS: ");
-            var epsId = int.Parse(Console.ReadLine());
-            Console.Write("Ingrese el ID de la ARL: ");
-            var arlId = int.Parse(Console.ReadLine());
+            try
+            {
+                Console.Write("Ingrese el ID del tercero: ");
+                var terceroId = Console.ReadLine();
+                
+                // Verificar que el tercero exista
+                var tercero = _context.Terceros.Find(terceroId);
+                if (tercero == null)
+                {
+                    Console.WriteLine("Error: El tercero con ID " + terceroId + " no existe. Debe crear el tercero primero.");
+                    return;
+                }
+                
+                // Verificar que el tercero no esté ya asignado a otro empleado
+                var empleadoExistente = _context.Empleados.FirstOrDefault(e => e.TerceroId == terceroId);
+                if (empleadoExistente != null)
+                {
+                    Console.WriteLine($"Error: El tercero con ID {terceroId} ya está asignado a otro empleado (ID: {empleadoExistente.Id}).");
+                    return;
+                }
+                
+                Console.Write("Ingrese la fecha de ingreso (YYYY-MM-DD): ");
+                var fechaIngreso = DateTime.Parse(Console.ReadLine());
+                Console.Write("Ingrese el salario base: ");
+                var salarioBase = double.Parse(Console.ReadLine());
+                
+                Console.Write("Ingrese el ID de la EPS: ");
+                var epsId = int.Parse(Console.ReadLine());
+                
+                // Verificar que la EPS exista
+                var eps = _context.Set<EPS>().Find(epsId);
+                if (eps == null)
+                {
+                    Console.WriteLine("Error: La EPS con ID " + epsId + " no existe. Debe crearla primero.");
+                    return;
+                }
+                
+                Console.Write("Ingrese el ID de la ARL: ");
+                var arlId = int.Parse(Console.ReadLine());
+                
+                // Verificar que la ARL exista
+                var arl = _context.Set<ARL>().Find(arlId);
+                if (arl == null)
+                {
+                    Console.WriteLine("Error: La ARL con ID " + arlId + " no existe. Debe crearla primero.");
+                    return;
+                }
 
-            var empleado = new Empleado { TerceroId = terceroId, FechaIngreso = fechaIngreso, SalarioBase = salarioBase, EpsId = epsId, ArlId = arlId };
-            _context.Empleados.Add(empleado);
-            _context.SaveChanges();
+                var empleado = new Empleado { TerceroId = terceroId, FechaIngreso = fechaIngreso, SalarioBase = salarioBase, EpsId = epsId, ArlId = arlId };
+                _context.Empleados.Add(empleado);
+                _context.SaveChanges();
 
-            Console.WriteLine("Empleado creado exitosamente.");
+                Console.WriteLine("Empleado creado exitosamente.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al crear el empleado: {ex.Message}");
+            }
         }
 
         private void EditarEmpleado()
         {
-            Console.Write("Ingrese el ID del empleado a editar: ");
-            var id = int.Parse(Console.ReadLine());
-            var empleado = _context.Empleados.Find(id);
-
-            if (empleado != null)
+            try
             {
-                Console.Write("Ingrese el nuevo ID del tercero: ");
-                empleado.TerceroId = Console.ReadLine();
-                Console.Write("Ingrese la nueva fecha de ingreso (YYYY-MM-DD): ");
-                empleado.FechaIngreso = DateTime.Parse(Console.ReadLine());
-                Console.Write("Ingrese el nuevo salario base: ");
-                empleado.SalarioBase = double.Parse(Console.ReadLine());
-                Console.Write("Ingrese el nuevo ID de la EPS: ");
-                empleado.EpsId = int.Parse(Console.ReadLine());
-                Console.Write("Ingrese el nuevo ID de la ARL: ");
-                empleado.ArlId = int.Parse(Console.ReadLine());
+                Console.Write("Ingrese el ID del empleado a editar: ");
+                var id = int.Parse(Console.ReadLine());
+                var empleado = _context.Empleados.Find(id);
 
-                _context.Update(empleado);
-                _context.SaveChanges();
+                if (empleado != null)
+                {
+                    Console.Write("Ingrese el nuevo ID del tercero: ");
+                    var terceroId = Console.ReadLine();
+                    
+                    // Verificar que el tercero exista
+                    var tercero = _context.Terceros.Find(terceroId);
+                    if (tercero == null)
+                    {
+                        Console.WriteLine("Error: El tercero con ID " + terceroId + " no existe. Debe crear el tercero primero.");
+                        return;
+                    }
+                    
+                    // Si cambia el tercero, verificar que no esté asignado a otro empleado
+                    if (terceroId != empleado.TerceroId)
+                    {
+                        var empleadoExistente = _context.Empleados.FirstOrDefault(e => e.TerceroId == terceroId && e.Id != id);
+                        if (empleadoExistente != null)
+                        {
+                            Console.WriteLine($"Error: El tercero con ID {terceroId} ya está asignado a otro empleado (ID: {empleadoExistente.Id}).");
+                            return;
+                        }
+                    }
+                    
+                    empleado.TerceroId = terceroId;
+                    
+                    Console.Write("Ingrese la nueva fecha de ingreso (YYYY-MM-DD): ");
+                    empleado.FechaIngreso = DateTime.Parse(Console.ReadLine());
+                    
+                    Console.Write("Ingrese el nuevo salario base: ");
+                    empleado.SalarioBase = double.Parse(Console.ReadLine());
+                    
+                    Console.Write("Ingrese el nuevo ID de la EPS: ");
+                    var epsId = int.Parse(Console.ReadLine());
+                    
+                    // Verificar que la EPS exista
+                    var eps = _context.Set<EPS>().Find(epsId);
+                    if (eps == null)
+                    {
+                        Console.WriteLine("Error: La EPS con ID " + epsId + " no existe. Debe crearla primero.");
+                        return;
+                    }
+                    
+                    empleado.EpsId = epsId;
+                    
+                    Console.Write("Ingrese el nuevo ID de la ARL: ");
+                    var arlId = int.Parse(Console.ReadLine());
+                    
+                    // Verificar que la ARL exista
+                    var arl = _context.Set<ARL>().Find(arlId);
+                    if (arl == null)
+                    {
+                        Console.WriteLine("Error: La ARL con ID " + arlId + " no existe. Debe crearla primero.");
+                        return;
+                    }
+                    
+                    empleado.ArlId = arlId;
 
-                Console.WriteLine("Empleado actualizado exitosamente.");
+                    _context.Update(empleado);
+                    _context.SaveChanges();
+
+                    Console.WriteLine("Empleado actualizado exitosamente.");
+                }
+                else
+                {
+                    Console.WriteLine("Empleado no encontrado.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Empleado no encontrado.");
+                Console.WriteLine($"Error al actualizar el empleado: {ex.Message}");
             }
         }
 
         private void EliminarEmpleado()
         {
-            Console.Write("Ingrese el ID del empleado a eliminar: ");
-            var id = int.Parse(Console.ReadLine());
-            var empleado = _context.Empleados.Find(id);
-
-            if (empleado != null)
+            try
             {
-                _context.Empleados.Remove(empleado);
-                _context.SaveChanges();
+                Console.Write("Ingrese el ID del empleado a eliminar: ");
+                var id = int.Parse(Console.ReadLine());
+                var empleado = _context.Empleados.Find(id);
 
-                Console.WriteLine("Empleado eliminado exitosamente.");
+                if (empleado != null)
+                {
+                    _context.Empleados.Remove(empleado);
+                    _context.SaveChanges();
+
+                    Console.WriteLine("Empleado eliminado exitosamente.");
+                }
+                else
+                {
+                    Console.WriteLine("Empleado no encontrado.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Empleado no encontrado.");
+                Console.WriteLine($"Error al eliminar el empleado: {ex.Message}");
             }
         }
     }
