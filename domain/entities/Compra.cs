@@ -1,16 +1,23 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace sgi_app.domain.entities
 {
+    [Table("Compras")]
     public class Compra
     {
+        [Key]
         public int Id { get; set; }
-        public string TerceroProvId { get; set; } // Foreign key
+        
+        [Column("TerceroProv_id")]
+        public string TerceroProvId { get; set; }
+        
         public DateTime Fecha { get; set; }
-        public string TerceroEmpId { get; set; } // Foreign key
+        
+        [Column("TerceroEmp_id")]
+        public string TerceroEmpId { get; set; }
+        
         public string DocCompra { get; set; }
     }
 }

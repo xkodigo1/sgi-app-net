@@ -2,17 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace sgi_app.domain.entities
 {
+    [Table("tipo_terceros")]
     public class TipoTercero
     {
-        public string Id { get; set; }
-        public string Nombre { get; set; }
-        public string Apellidos { get; set; }
-        public string Email { get; set; }
-        public int TipoDocId { get; set; } // Foreign key
-        public int TipoTerceroId { get; set; } // Foreign key
-        public int CiudadId { get; set; } // Foreign key
+        [Key]
+        public int Id { get; set; }
+        
+        [Column("descripcion")]
+        public string Descripcion { get; set; }
     }
 }

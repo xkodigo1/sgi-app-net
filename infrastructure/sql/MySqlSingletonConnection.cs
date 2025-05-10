@@ -15,7 +15,8 @@ namespace sgi_app.infrastructure.sql
 
         private MySqlSingletonConnection()
         {
-            string connectionString = "Server=localhost;Database=sgi-db;User=root;Password=kodigo777;";
+            string connectionString = "Server=localhost;Port=3306;Database=sgi-db;User=sgiapp;Password=kodigo777;SslMode=none;AllowPublicKeyRetrieval=true;";
+            
             _connection = new MySqlConnection(connectionString);
         }
 
@@ -54,6 +55,23 @@ namespace sgi_app.infrastructure.sql
                 if (_connection.State == System.Data.ConnectionState.Open)
                 {
                     _connection.Close();
+                }
+            }
+        }
+
+        public static void TestDirectConnection()
+        {
+            string cs = "Server=localhost;Port=3306;Database=sgi-db;User=root;Password=kodigo777;SslMode=none;AllowPublicKeyRetrieval=true;";
+            using (var connection = new MySqlConnection(cs))
+            {
+                try
+                {
+                    connection.Open();
+                    Console.WriteLine("Conexión directa exitosa!");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error en conexión directa: {ex.Message}");
                 }
             }
         }

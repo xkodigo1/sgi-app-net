@@ -2,7 +2,9 @@
 using sgi_app.domain.entities;
 using sgi_app.infrastructure.sql;
 using sgi_app.application.ui;
+using sgi_app.infrastructure.repositories;
 using System;
+using System.Collections.Generic;
 
 namespace sgi_app
 {
@@ -10,11 +12,14 @@ namespace sgi_app
     {
         public static void Main(string[] args)
         {
+            // Mostrar pantalla de bienvenida
+            UIHelper.MostrarPantallaBienvenida();
+            
             // Verificar la conexión a la base de datos
             var connectionTest = MySqlSingletonConnection.Instance.TestConnection();
             if (!connectionTest)
             {
-                Console.WriteLine("❌ No se pudo conectar a la base de datos. Saliendo de la aplicación.");
+                UIHelper.MostrarError("No se pudo conectar a la base de datos. Saliendo de la aplicación.");
                 return; // Salir si la conexión falla
             }
 
@@ -22,18 +27,24 @@ namespace sgi_app
 
             while (true)
             {
-                Console.WriteLine("=== Menú Principal ===");
-                Console.WriteLine("1. Panel de Clientes");
-                Console.WriteLine("2. Panel de Compras");
-                Console.WriteLine("3. Panel de Productos");
-                Console.WriteLine("4. Panel de Proveedores");
-                Console.WriteLine("5. Panel de Terceros");
-                Console.WriteLine("6. Panel de Ventas");
-                Console.WriteLine("7. Panel de Movimiento de Caja");
-                Console.WriteLine("8. Panel de Detalle de Ventas");
-                Console.WriteLine("9. Panel de Detalle de Compras");
-                Console.WriteLine("0. Salir");
-                Console.Write("Seleccione una opción: ");
+                // Mostrar menú con formato mejorado
+                UIHelper.MostrarTitulo("Sistema de Gestión Integral");
+                
+                // Opciones del menú con descripciones
+                var opciones = new Dictionary<string, string>
+                {
+                    { "1", "Panel de Clientes       - Gestión de información de clientes" },
+                    { "2", "Panel de Compras        - Registro y administración de compras" },
+                    { "3", "Panel de Productos      - Inventario y gestión de productos" },
+                    { "4", "Panel de Proveedores    - Administración de proveedores" },
+                    { "5", "Panel de Terceros       - Gestión de personas y entidades" },
+                    { "6", "Panel de Ventas         - Registro y seguimiento de ventas" },
+                    { "7", "Panel de Movimientos    - Control de movimientos de caja" },
+                    { "8", "Detalles de Ventas      - Gestión de líneas de venta" },
+                    { "9", "Detalles de Compras     - Gestión de líneas de compra" }
+                };
+                
+                UIHelper.MostrarMenuOpciones(opciones);
 
                 var option = Console.ReadLine();
 
@@ -52,7 +63,8 @@ namespace sgi_app
                         productoPanel.ShowMenu();
                         break;
                     case "4":
-                        var proveedorPanel = new ProveedorPanel(context);
+                        var proveedorRepository = new ProveedorRepository(context);
+                        var proveedorPanel = new ProveedorPanel(proveedorRepository, context);
                         proveedorPanel.ShowMenu();
                         break;
                     case "5":
@@ -76,9 +88,11 @@ namespace sgi_app
                         detalleCompraPanel.ShowMenu();
                         break;
                     case "0":
+                        UIHelper.MostrarPantallaDespedida();
                         return;
                     default:
-                        Console.WriteLine("Opción no válida. Intente de nuevo.");
+                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        Console.ReadKey();
                         break;
                 }
             }
@@ -100,12 +114,18 @@ namespace sgi_app.infrastructure.sql
         public DbSet<MovCaja> MovCaja { get; set; }
         public DbSet<DetalleVenta> DetalleVentas { get; set; }
         public DbSet<DetalleCompra> DetalleCompras { get; set; }
+        public DbSet<TipoDocumento> TipoDocumentos { get; set; }
+        public DbSet<TipoTercero> TipoTerceros { get; set; }
+        public DbSet<Ciudad> Ciudades { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // Usar la conexión del singleton
-            var connection = MySqlSingletonConnection.Instance.GetConnection();
-            optionsBuilder.UseMySql(connection, new MySqlServerVersion(new Version(8, 0, 21)));
+            // Usamos la cadena de conexión directamente
+            optionsBuilder.UseMySql(
+                "Server=localhost;Port=3306;Database=sgi-db;User=sgiapp;Password=kodigo777;SslMode=none;",
+                new MySqlServerVersion(new Version(8, 0, 21)),
+                options => options.EnableRetryOnFailure()
+            );
         }
     }
 }
