@@ -95,9 +95,9 @@ CREATE TABLE `Productos` (
     `Stock` INT,
     `StockMin` INT,
     `StockMax` INT,
+    `Precio` DECIMAL(10, 2),
     `CreatedAt` DATE,
-    `UpdatedAt` DATE,
-    `Barcode` VARCHAR(50) UNIQUE
+    `UpdatedAt` DATE
 );
 
 CREATE TABLE `Compras` (
@@ -185,6 +185,7 @@ CREATE TABLE `Planes` (
 CREATE TABLE `plan_Producto` (
     `Plan_id` INT,
     `Producto_id` VARCHAR(20),
+    PRIMARY KEY (`Plan_id`, `Producto_id`),
     FOREIGN KEY (`Plan_id`) REFERENCES `Planes`(`id`),
     FOREIGN KEY (`Producto_id`) REFERENCES `Productos`(`id`)
 );

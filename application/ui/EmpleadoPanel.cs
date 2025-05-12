@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using sgi_app.infrastructure.sql;
 using sgi_app.domain.entities;
 
@@ -15,220 +17,480 @@ namespace sgi_app.application.ui
             _context = context;
         }
 
-        public void ShowMenu()
+        public async Task ShowMenu()
         {
             while (true)
             {
-                Console.WriteLine("=== Panel de Empleados ===");
-                Console.WriteLine("1. Listar Empleados");
-                Console.WriteLine("2. Crear Empleado");
-                Console.WriteLine("3. Editar Empleado");
-                Console.WriteLine("4. Eliminar Empleado");
-                Console.WriteLine("5. Salir");
-                Console.Write("Seleccione una opción: ");
+                UIHelper.ShowTitle("Employees Panel");
+                
+                var options = new Dictionary<string, string>
+                {
+                    { "1", "List Employees" },
+                    { "2", "Create New Employee" },
+                    { "3", "Edit Employee" },
+                    { "4", "Delete Employee" }
+                };
+                
+                UIHelper.ShowMenuOptions(options);
 
                 var option = Console.ReadLine();
 
                 switch (option)
                 {
                     case "1":
-                        ListarEmpleados();
+                        ListEmployees();
                         break;
                     case "2":
-                        CrearEmpleado();
+                        await CreateEmployeeAsync();
                         break;
                     case "3":
-                        EditarEmpleado();
+                        await UpdateEmployeeAsync();
                         break;
                     case "4":
-                        EliminarEmpleado();
+                        await DeleteEmployeeAsync();
                         break;
-                    case "5":
+                    case "0":
                         return;
                     default:
-                        Console.WriteLine("Opción no válida. Intente de nuevo.");
+                        UIHelper.ShowWarning("Invalid option. Please try again.");
+                        Console.ReadKey();
                         break;
                 }
             }
         }
 
-        private void ListarEmpleados()
+        private void ListEmployees()
         {
-            var empleados = _context.Empleados.ToList();
-            foreach (var empleado in empleados)
-            {
-                Console.WriteLine($"ID: {empleado.Id}, TerceroId: {empleado.TerceroId}, FechaIngreso: {empleado.FechaIngreso}, SalarioBase: {empleado.SalarioBase}");
-            }
-        }
-
-        private void CrearEmpleado()
-        {
+            UIHelper.ShowTitle("Employee List");
+            
             try
             {
-                Console.Write("Ingrese el ID del tercero: ");
-                var terceroId = Console.ReadLine();
+                var empleados = _context.Empleados.ToList();
                 
-                // Verificar que el tercero exista
-                var tercero = _context.Terceros.Find(terceroId);
-                if (tercero == null)
+                if (!empleados.Any())
                 {
-                    Console.WriteLine("Error: El tercero con ID " + terceroId + " no existe. Debe crear el tercero primero.");
+                    UIHelper.ShowWarning("No employees are registered.");
+                    Console.ReadKey();
                     return;
                 }
                 
-                // Verificar que el tercero no esté ya asignado a otro empleado
-                var empleadoExistente = _context.Empleados.FirstOrDefault(e => e.TerceroId == terceroId);
-                if (empleadoExistente != null)
+                // Define columns and values to display
+                var columns = new Dictionary<string, Func<Empleado, object>>
                 {
-                    Console.WriteLine($"Error: El tercero con ID {terceroId} ya está asignado a otro empleado (ID: {empleadoExistente.Id}).");
-                    return;
-                }
+                    { "ID", e => e.Id },
+                    { "Third party", e => e.TerceroId },
+                    { "Hire Date", e => e.FechaIngreso.ToShortDateString() },
+                    { "Base Salary", e => $"{e.SalarioBase:C0}" },
+                    { "EPS", e => e.EpsId },
+                    { "ARL", e => e.ArlId }
+                };
                 
-                Console.Write("Ingrese la fecha de ingreso (YYYY-MM-DD): ");
-                var fechaIngreso = DateTime.Parse(Console.ReadLine());
-                Console.Write("Ingrese el salario base: ");
-                var salarioBase = double.Parse(Console.ReadLine());
+                // Use DrawTable method to show formatted data
+                UIHelper.DrawTable(empleados, columns, "Employee Records");
                 
-                Console.Write("Ingrese el ID de la EPS: ");
-                var epsId = int.Parse(Console.ReadLine());
-                
-                // Verificar que la EPS exista
-                var eps = _context.Set<EPS>().Find(epsId);
-                if (eps == null)
-                {
-                    Console.WriteLine("Error: La EPS con ID " + epsId + " no existe. Debe crearla primero.");
-                    return;
-                }
-                
-                Console.Write("Ingrese el ID de la ARL: ");
-                var arlId = int.Parse(Console.ReadLine());
-                
-                // Verificar que la ARL exista
-                var arl = _context.Set<ARL>().Find(arlId);
-                if (arl == null)
-                {
-                    Console.WriteLine("Error: La ARL con ID " + arlId + " no existe. Debe crearla primero.");
-                    return;
-                }
-
-                var empleado = new Empleado { TerceroId = terceroId, FechaIngreso = fechaIngreso, SalarioBase = salarioBase, EpsId = epsId, ArlId = arlId };
-                _context.Empleados.Add(empleado);
-                _context.SaveChanges();
-
-                Console.WriteLine("Empleado creado exitosamente.");
+                Console.WriteLine("\nPress any key to continue...");
+                Console.ReadKey();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al crear el empleado: {ex.Message}");
+                UIHelper.ShowError("Error listing employees", ex);
             }
         }
 
-        private void EditarEmpleado()
+        private async Task CreateEmployeeAsync()
         {
+            UIHelper.ShowTitle("Create New Employee");
+            
             try
             {
-                Console.Write("Ingrese el ID del empleado a editar: ");
-                var id = int.Parse(Console.ReadLine());
-                var empleado = _context.Empleados.Find(id);
+                // Show available third parties
+                await ShowAvailableThirdParties();
+                
+                var terceroId = UIHelper.RequestInput("Enter ID of the third party");
+                if (string.IsNullOrWhiteSpace(terceroId))
+                {
+                    UIHelper.ShowWarning("Operation cancelled. Third party ID is required.");
+                    return;
+                }
+                
+                // Verify that third party exists
+                var tercero = await _context.Terceros.FindAsync(terceroId);
+                if (tercero == null)
+                {
+                    UIHelper.ShowError($"Third party with ID {terceroId} does not exist. You must create the third party first.");
+                    return;
+                }
+                
+                // Verify that third party is not already assigned to another employee
+                var empleadoExistente = await _context.Empleados.FirstOrDefaultAsync(e => e.TerceroId == terceroId);
+                if (empleadoExistente != null)
+                {
+                    UIHelper.ShowError($"Third party with ID {terceroId} is already assigned to another employee (ID: {empleadoExistente.Id}).");
+                    return;
+                }
+                
+                var fechaIngresoStr = UIHelper.RequestInput("Enter hire date (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
+                var fechaIngreso = DateTime.Parse(fechaIngresoStr);
+                
+                var salarioBaseStr = UIHelper.RequestInput("Enter base salary");
+                if (string.IsNullOrWhiteSpace(salarioBaseStr))
+                {
+                    UIHelper.ShowWarning("Operation cancelled. Base salary is required.");
+                    return;
+                }
+                var salarioBase = double.Parse(salarioBaseStr);
+                
+                // Show available EPS
+                await ShowAvailableEPS();
+                
+                var epsIdStr = UIHelper.RequestInput("Enter EPS ID");
+                if (string.IsNullOrWhiteSpace(epsIdStr))
+                {
+                    UIHelper.ShowWarning("Operation cancelled. EPS ID is required.");
+                    return;
+                }
+                var epsId = int.Parse(epsIdStr);
+                
+                // Verify that EPS exists
+                var eps = await _context.Set<EPS>().FindAsync(epsId);
+                if (eps == null)
+                {
+                    UIHelper.ShowError($"EPS with ID {epsId} does not exist. You must create it first.");
+                    return;
+                }
+                
+                // Show available ARL
+                await ShowAvailableARL();
+                
+                var arlIdStr = UIHelper.RequestInput("Enter ARL ID");
+                if (string.IsNullOrWhiteSpace(arlIdStr))
+                {
+                    UIHelper.ShowWarning("Operation cancelled. ARL ID is required.");
+                    return;
+                }
+                var arlId = int.Parse(arlIdStr);
+                
+                // Verify that ARL exists
+                var arl = await _context.Set<ARL>().FindAsync(arlId);
+                if (arl == null)
+                {
+                    UIHelper.ShowError($"ARL with ID {arlId} does not exist. You must create it first.");
+                    return;
+                }
+
+                var empleado = new Empleado { 
+                    TerceroId = terceroId, 
+                    FechaIngreso = fechaIngreso, 
+                    SalarioBase = salarioBase, 
+                    EpsId = epsId, 
+                    ArlId = arlId 
+                };
+                
+                // Show summary before confirming
+                UIHelper.ShowTitle("Employee Summary");
+                Console.WriteLine($"Third party: {empleado.TerceroId}");
+                Console.WriteLine($"Hire Date: {empleado.FechaIngreso.ToShortDateString()}");
+                Console.WriteLine($"Base Salary: {empleado.SalarioBase:C0}");
+                Console.WriteLine($"EPS: {empleado.EpsId}");
+                Console.WriteLine($"ARL: {empleado.ArlId}");
+                
+                if (UIHelper.Confirm("Do you want to save this employee?"))
+                {
+                    _context.Empleados.Add(empleado);
+                    await _context.SaveChangesAsync();
+                    UIHelper.ShowSuccess($"Employee created successfully with ID: {empleado.Id}");
+                }
+                else
+                {
+                    UIHelper.ShowWarning("Operation cancelled by user.");
+                }
+            }
+            catch (Exception ex)
+            {
+                UIHelper.ShowError("Error creating employee", ex);
+            }
+        }
+
+        private async Task UpdateEmployeeAsync()
+        {
+            UIHelper.ShowTitle("Edit Employee");
+            
+            try
+            {
+                // Show list of available employees
+                ListEmployees();
+                
+                var idStr = UIHelper.RequestInput("Enter ID of the employee to edit");
+                if (string.IsNullOrWhiteSpace(idStr))
+                {
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
+                    return;
+                }
+                
+                var id = int.Parse(idStr);
+                var empleado = await _context.Empleados.FindAsync(id);
 
                 if (empleado != null)
                 {
-                    Console.Write("Ingrese el nuevo ID del tercero: ");
-                    var terceroId = Console.ReadLine();
+                    // Show current information
+                    UIHelper.ShowTitle("Current Information");
+                    Console.WriteLine($"ID: {empleado.Id}");
+                    Console.WriteLine($"Third party: {empleado.TerceroId}");
+                    Console.WriteLine($"Hire Date: {empleado.FechaIngreso.ToShortDateString()}");
+                    Console.WriteLine($"Base Salary: {empleado.SalarioBase:C0}");
+                    Console.WriteLine($"EPS: {empleado.EpsId}");
+                    Console.WriteLine($"ARL: {empleado.ArlId}");
+                    Console.WriteLine("\nEnter new values or leave blank to keep current:");
                     
-                    // Verificar que el tercero exista
-                    var tercero = _context.Terceros.Find(terceroId);
+                    // Show available third parties
+                    await ShowAvailableThirdParties();
+                    
+                    var terceroId = UIHelper.RequestInput("New Third party ID", empleado.TerceroId.ToString());
+                    
+                    // Verify that third party exists
+                    var tercero = await _context.Terceros.FindAsync(terceroId);
                     if (tercero == null)
                     {
-                        Console.WriteLine("Error: El tercero con ID " + terceroId + " no existe. Debe crear el tercero primero.");
+                        UIHelper.ShowError($"Third party with ID {terceroId} does not exist. You must create the third party first.");
                         return;
                     }
                     
-                    // Si cambia el tercero, verificar que no esté asignado a otro empleado
+                    // If third party changes, verify it's not assigned to another employee
                     if (terceroId != empleado.TerceroId)
                     {
-                        var empleadoExistente = _context.Empleados.FirstOrDefault(e => e.TerceroId == terceroId && e.Id != id);
+                        var empleadoExistente = await _context.Empleados.FirstOrDefaultAsync(e => e.TerceroId == terceroId && e.Id != id);
                         if (empleadoExistente != null)
                         {
-                            Console.WriteLine($"Error: El tercero con ID {terceroId} ya está asignado a otro empleado (ID: {empleadoExistente.Id}).");
+                            UIHelper.ShowError($"Third party with ID {terceroId} is already assigned to another employee (ID: {empleadoExistente.Id}).");
                             return;
                         }
                     }
                     
-                    empleado.TerceroId = terceroId;
+                    var fechaIngresoStr = UIHelper.RequestInput("New hire date (YYYY-MM-DD)", empleado.FechaIngreso.ToString("yyyy-MM-dd"));
+                    var salarioBaseStr = UIHelper.RequestInput("New base salary", empleado.SalarioBase.ToString());
                     
-                    Console.Write("Ingrese la nueva fecha de ingreso (YYYY-MM-DD): ");
-                    empleado.FechaIngreso = DateTime.Parse(Console.ReadLine());
+                    // Show available EPS
+                    await ShowAvailableEPS();
                     
-                    Console.Write("Ingrese el nuevo salario base: ");
-                    empleado.SalarioBase = double.Parse(Console.ReadLine());
+                    var epsIdStr = UIHelper.RequestInput("New EPS ID", empleado.EpsId.ToString());
+                    var epsId = int.Parse(epsIdStr);
                     
-                    Console.Write("Ingrese el nuevo ID de la EPS: ");
-                    var epsId = int.Parse(Console.ReadLine());
-                    
-                    // Verificar que la EPS exista
-                    var eps = _context.Set<EPS>().Find(epsId);
+                    // Verify that EPS exists
+                    var eps = await _context.Set<EPS>().FindAsync(epsId);
                     if (eps == null)
                     {
-                        Console.WriteLine("Error: La EPS con ID " + epsId + " no existe. Debe crearla primero.");
+                        UIHelper.ShowError($"EPS with ID {epsId} does not exist. You must create it first.");
                         return;
                     }
                     
-                    empleado.EpsId = epsId;
+                    // Show available ARL
+                    await ShowAvailableARL();
                     
-                    Console.Write("Ingrese el nuevo ID de la ARL: ");
-                    var arlId = int.Parse(Console.ReadLine());
+                    var arlIdStr = UIHelper.RequestInput("New ARL ID", empleado.ArlId.ToString());
+                    var arlId = int.Parse(arlIdStr);
                     
-                    // Verificar que la ARL exista
-                    var arl = _context.Set<ARL>().Find(arlId);
+                    // Verify that ARL exists
+                    var arl = await _context.Set<ARL>().FindAsync(arlId);
                     if (arl == null)
                     {
-                        Console.WriteLine("Error: La ARL con ID " + arlId + " no existe. Debe crearla primero.");
+                        UIHelper.ShowError($"ARL with ID {arlId} does not exist. You must create it first.");
                         return;
                     }
                     
+                    empleado.TerceroId = terceroId;
+                    empleado.FechaIngreso = DateTime.Parse(fechaIngresoStr);
+                    empleado.SalarioBase = double.Parse(salarioBaseStr);
+                    empleado.EpsId = epsId;
                     empleado.ArlId = arlId;
 
-                    _context.Update(empleado);
-                    _context.SaveChanges();
-
-                    Console.WriteLine("Empleado actualizado exitosamente.");
+                    // Show changes summary before confirming
+                    UIHelper.ShowTitle("Changes Summary");
+                    Console.WriteLine($"ID: {empleado.Id}");
+                    Console.WriteLine($"Third party: {empleado.TerceroId}");
+                    Console.WriteLine($"Hire Date: {empleado.FechaIngreso.ToShortDateString()}");
+                    Console.WriteLine($"Base Salary: {empleado.SalarioBase:C0}");
+                    Console.WriteLine($"EPS: {empleado.EpsId}");
+                    Console.WriteLine($"ARL: {empleado.ArlId}");
+                    
+                    if (UIHelper.Confirm("Do you confirm these changes?"))
+                    {
+                        _context.Update(empleado);
+                        await _context.SaveChangesAsync();
+                        UIHelper.ShowSuccess("Employee updated successfully.");
+                    }
+                    else
+                    {
+                        UIHelper.ShowWarning("Operation cancelled by user.");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Empleado no encontrado.");
+                    UIHelper.ShowError("Employee not found.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al actualizar el empleado: {ex.Message}");
+                UIHelper.ShowError("Error updating employee", ex);
             }
         }
 
-        private void EliminarEmpleado()
+        private async Task DeleteEmployeeAsync()
         {
+            UIHelper.ShowTitle("Delete Employee");
+            
             try
             {
-                Console.Write("Ingrese el ID del empleado a eliminar: ");
-                var id = int.Parse(Console.ReadLine());
-                var empleado = _context.Empleados.Find(id);
+                // Show list of available employees
+                ListEmployees();
+                
+                var idStr = UIHelper.RequestInput("Enter ID of the employee to delete");
+                if (string.IsNullOrWhiteSpace(idStr))
+                {
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
+                    return;
+                }
+                
+                var id = int.Parse(idStr);
+                var empleado = await _context.Empleados.FindAsync(id);
 
                 if (empleado != null)
                 {
-                    _context.Empleados.Remove(empleado);
-                    _context.SaveChanges();
-
-                    Console.WriteLine("Empleado eliminado exitosamente.");
+                    // Verify if there are associated purchases or sales
+                    var compras = await _context.Compras.Where(c => c.TerceroEmpId == empleado.TerceroId).ToListAsync();
+                    var ventas = await _context.Ventas.Where(v => v.TerceroEnId == empleado.TerceroId).ToListAsync();
+                    
+                    if (compras.Any() || ventas.Any())
+                    {
+                        UIHelper.ShowWarning($"This employee has {compras.Count} purchases and {ventas.Count} sales associated.");
+                        if (!UIHelper.Confirm("Are you ABSOLUTELY sure you want to delete this employee and their associations?"))
+                        {
+                            UIHelper.ShowWarning("Operation cancelled by user.");
+                            return;
+                        }
+                    }
+                    
+                    // Show information to delete
+                    UIHelper.ShowTitle("Employee Information to Delete");
+                    Console.WriteLine($"ID: {empleado.Id}");
+                    Console.WriteLine($"Third party: {empleado.TerceroId}");
+                    Console.WriteLine($"Hire Date: {empleado.FechaIngreso.ToShortDateString()}");
+                    Console.WriteLine($"Base Salary: {empleado.SalarioBase:C0}");
+                    Console.WriteLine($"EPS: {empleado.EpsId}");
+                    Console.WriteLine($"ARL: {empleado.ArlId}");
+                    
+                    if (UIHelper.Confirm("Are you ABSOLUTELY sure you want to delete this employee?"))
+                    {
+                        var strategy = _context.Database.CreateExecutionStrategy();
+                        await strategy.ExecuteAsync(async () =>
+                        {
+                            using (var transaction = await _context.Database.BeginTransactionAsync())
+                            {
+                                try
+                                {
+                                    _context.Empleados.Remove(empleado);
+                                    await _context.SaveChangesAsync();
+                                    
+                                    await transaction.CommitAsync();
+                                    UIHelper.ShowSuccess("Employee deleted successfully.");
+                                }
+                                catch (Exception ex)
+                                {
+                                    await transaction.RollbackAsync();
+                                    throw new Exception("Error deleting employee. Changes have been reverted.", ex);
+                                }
+                            }
+                        });
+                    }
+                    else
+                    {
+                        UIHelper.ShowWarning("Operation cancelled by user.");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Empleado no encontrado.");
+                    UIHelper.ShowError("Employee not found.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al eliminar el empleado: {ex.Message}");
+                UIHelper.ShowError("Error deleting employee", ex);
             }
         }
+        
+        // Helper methods for showing related entities
+        
+        private async Task ShowAvailableThirdParties()
+        {
+            UIHelper.ShowTitle("Available Third Parties");
+            var terceros = await _context.Terceros.ToListAsync();
+            
+            if (!terceros.Any())
+            {
+                UIHelper.ShowWarning("No third parties are registered. You must create a third party first.");
+                return;
+            }
+            
+            var columns = new Dictionary<string, Func<Terceros, object>>
+            {
+                { "ID", t => t.Id },
+                { "Name", t => t.Nombre },
+                { "Last Name", t => t.Apellidos },
+                { "Email", t => t.Email ?? "N/A" }
+            };
+            
+            UIHelper.DrawTable(terceros, columns, "Third Party List");
+            Console.WriteLine();
+        }
+        
+        private async Task ShowAvailableEPS()
+        {
+            UIHelper.ShowTitle("Available EPS");
+            var epsList = await _context.Set<EPS>().ToListAsync();
+            
+            if (!epsList.Any())
+            {
+                UIHelper.ShowWarning("No EPS are registered.");
+                return;
+            }
+            
+            var columns = new Dictionary<string, Func<EPS, object>>
+            {
+                { "ID", e => e.Id },
+                { "Name", e => e.Nombre }
+            };
+            
+            UIHelper.DrawTable(epsList, columns, "EPS List");
+            Console.WriteLine();
+        }
+        
+        private async Task ShowAvailableARL()
+        {
+            UIHelper.ShowTitle("Available ARL");
+            var arlList = await _context.Set<ARL>().ToListAsync();
+            
+            if (!arlList.Any())
+            {
+                UIHelper.ShowWarning("No ARL are registered.");
+                return;
+            }
+            
+            var columns = new Dictionary<string, Func<ARL, object>>
+            {
+                { "ID", a => a.Id },
+                { "Name", a => a.Nombre }
+            };
+            
+            UIHelper.DrawTable(arlList, columns, "ARL List");
+            Console.WriteLine();
+        }
+        
+        // Maintain backward compatibility
+        private void ListarEmpleados() => ListEmployees();
+        private Task CrearEmpleadoAsync() => CreateEmployeeAsync();
+        private Task EditarEmpleadoAsync() => UpdateEmployeeAsync();
+        private Task EliminarEmpleadoAsync() => DeleteEmployeeAsync();
+        private Task MostrarTercerosDisponibles() => ShowAvailableThirdParties();
+        private Task MostrarEPSDisponibles() => ShowAvailableEPS();
+        private Task MostrarARLDisponibles() => ShowAvailableARL();
     }
 }

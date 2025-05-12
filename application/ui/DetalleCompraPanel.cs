@@ -20,258 +20,342 @@ namespace sgi_app.application.ui
         {
             while (true)
             {
-                UIHelper.MostrarTitulo("Panel de Detalle de Compras");
+                UIHelper.ShowTitle("Purchase Detail Panel");
                 
-                var opciones = new Dictionary<string, string>
+                var options = new Dictionary<string, string>
                 {
-                    { "1", "Listar Detalles de Compras" },
-                    { "2", "Crear Nuevo Detalle" },
-                    { "3", "Editar Detalle Existente" },
-                    { "4", "Eliminar Detalle" }
+                    { "1", "List Purchase Details" },
+                    { "2", "Create New Detail" },
+                    { "3", "Edit Existing Detail" },
+                    { "4", "Delete Detail" }
                 };
                 
-                UIHelper.MostrarMenuOpciones(opciones);
+                UIHelper.ShowMenuOptions(options);
 
                 var option = Console.ReadLine();
 
                 switch (option)
                 {
                     case "1":
-                        ListarDetalles();
+                        ListDetails();
                         break;
                     case "2":
-                        CrearDetalle();
+                        CreateDetail();
                         break;
                     case "3":
-                        EditarDetalle();
+                        UpdateDetail();
                         break;
                     case "4":
-                        EliminarDetalle();
+                        DeleteDetail();
                         break;
                     case "0":
                         return;
                     default:
-                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        UIHelper.ShowWarning("Invalid option. Please try again.");
                         Console.ReadKey();
                         break;
                 }
             }
         }
 
-        private void ListarDetalles()
+        private void ListDetails()
         {
-            UIHelper.MostrarTitulo("Listado de Detalles de Compras");
+            UIHelper.ShowTitle("Purchase Detail List");
             
             try
             {
-                var detalles = _context.DetalleCompras.ToList();
+                var details = _context.DetalleCompras.ToList();
                 
-                // Definir las columnas y los valores a mostrar
-                var columnas = new Dictionary<string, Func<DetalleCompra, object>>
+                // Define columns and values to display
+                var columns = new Dictionary<string, Func<DetalleCompra, object>>
                 {
                     { "ID", d => d.Id },
-                    { "Producto", d => d.ProductoId },
-                    { "Compra", d => d.CompraId },
-                    { "Fecha", d => d.Fecha.ToShortDateString() },
-                    { "Cantidad", d => d.Cantidad },
-                    { "Valor Unit.", d => $"{d.Valor:C}" },
+                    { "Product", d => d.ProductoId },
+                    { "Purchase", d => d.CompraId },
+                    { "Date", d => d.Fecha.ToShortDateString() },
+                    { "Quantity", d => d.Cantidad },
+                    { "Unit Price", d => $"{d.Valor:C}" },
                     { "Total", d => $"{(d.Cantidad * d.Valor):C}" }
                 };
                 
-                // Usar el método DibujarTabla para mostrar los datos formateados
-                UIHelper.DibujarTabla(detalles, columnas, "Detalles de Compras");
+                // Use DrawTable method to show formatted data
+                UIHelper.DrawTable(details, columns, "Purchase Details");
                 
-                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al listar los detalles de compras", ex);
+                UIHelper.ShowError("Error listing purchase details", ex);
             }
         }
 
-        private void CrearDetalle()
+        private void CreateDetail()
         {
+            UIHelper.ShowTitle("Create New Purchase Detail");
+            
             try
             {
-                Console.Write("Ingrese el ID del detalle: ");
-                var id = int.Parse(Console.ReadLine());
-                
-                // Verificar que no exista ya un detalle con este ID
-                var detalleExistente = _context.DetalleCompras.Find(id);
-                if (detalleExistente != null)
+                // Use RequestInput method for better UX
+                var idStr = UIHelper.RequestInput("Enter the detail ID");
+                if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    Console.WriteLine($"Error: Ya existe un detalle de compra con el ID {id}.");
+                    UIHelper.ShowWarning("Operation cancelled. The ID is required.");
                     return;
                 }
                 
-                Console.Write("Ingrese el ID del producto: ");
-                var productoId = Console.ReadLine();
+                var id = int.Parse(idStr);
                 
-                // Verificar que el producto exista
-                var producto = _context.Productos.Find(productoId);
-                if (producto == null)
+                // Check that no detail with this ID already exists
+                var existingDetail = _context.DetalleCompras.Find(id);
+                if (existingDetail != null)
                 {
-                    Console.WriteLine("Error: El producto con ID " + productoId + " no existe. Debe crear el producto primero.");
+                    UIHelper.ShowError($"A purchase detail with ID {id} already exists.");
                     return;
                 }
                 
-                Console.Write("Ingrese el ID de la compra: ");
-                var compraId = int.Parse(Console.ReadLine());
+                var productId = UIHelper.RequestInput("Enter the product ID");
                 
-                // Verificar que la compra exista
-                var compra = _context.Compras.Find(compraId);
-                if (compra == null)
+                // Check that the product exists
+                var product = _context.Productos.Find(productId);
+                if (product == null)
                 {
-                    Console.WriteLine("Error: La compra con ID " + compraId + " no existe. Debe crear la compra primero.");
+                    UIHelper.ShowError($"The product with ID {productId} does not exist. You must create the product first.");
                     return;
                 }
                 
-                // Verificar que no exista un detalle con la misma combinación de compra y producto
-                var detalleDuplicado = _context.DetalleCompras.FirstOrDefault(d => d.CompraId == compraId && d.ProductoId == productoId);
-                if (detalleDuplicado != null)
+                var purchaseIdStr = UIHelper.RequestInput("Enter the purchase ID");
+                var purchaseId = int.Parse(purchaseIdStr);
+                
+                // Check that the purchase exists
+                var purchase = _context.Compras.Find(purchaseId);
+                if (purchase == null)
                 {
-                    Console.WriteLine($"Error: Ya existe un detalle para la compra {compraId} y el producto {productoId}.");
-                    Console.WriteLine($"Si desea modificar la cantidad, edite el detalle con ID {detalleDuplicado.Id}.");
+                    UIHelper.ShowError($"The purchase with ID {purchaseId} does not exist. You must create the purchase first.");
                     return;
                 }
                 
-                Console.Write("Ingrese la fecha (YYYY-MM-DD): ");
-                var fecha = DateTime.Parse(Console.ReadLine());
+                // Check that no detail with the same combination of purchase and product exists
+                var duplicateDetail = _context.DetalleCompras.FirstOrDefault(d => d.CompraId == purchaseId && d.ProductoId == productId);
+                if (duplicateDetail != null)
+                {
+                    UIHelper.ShowError($"A detail for purchase {purchaseId} and product {productId} already exists.\nIf you want to modify the quantity, edit the detail with ID {duplicateDetail.Id}.");
+                    return;
+                }
                 
-                Console.Write("Ingrese la cantidad: ");
-                var cantidad = int.Parse(Console.ReadLine());
+                var dateStr = UIHelper.RequestInput("Enter the date (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
+                var date = DateTime.Parse(dateStr);
                 
-                Console.Write("Ingrese el valor unitario: ");
-                var valor = decimal.Parse(Console.ReadLine());
+                var quantityStr = UIHelper.RequestInput("Enter the quantity");
+                var quantity = int.Parse(quantityStr);
+                
+                var valueStr = UIHelper.RequestInput("Enter the unit price");
+                var value = decimal.Parse(valueStr);
 
-                var detalle = new DetalleCompra { 
+                var detail = new DetalleCompra { 
                     Id = id, 
-                    ProductoId = productoId, 
-                    CompraId = compraId,
-                    Fecha = fecha,
-                    Cantidad = cantidad,
-                    Valor = valor
+                    ProductoId = productId, 
+                    CompraId = purchaseId,
+                    Fecha = date,
+                    Cantidad = quantity,
+                    Valor = value
                 };
                 
-                _context.DetalleCompras.Add(detalle);
-                _context.SaveChanges();
+                // Show summary before confirming
+                UIHelper.ShowTitle("Detail Summary");
+                Console.WriteLine($"ID: {detail.Id}");
+                Console.WriteLine($"Product: {detail.ProductoId}");
+                Console.WriteLine($"Purchase: {detail.CompraId}");
+                Console.WriteLine($"Date: {detail.Fecha.ToShortDateString()}");
+                Console.WriteLine($"Quantity: {detail.Cantidad}");
+                Console.WriteLine($"Unit price: {detail.Valor:C}");
+                Console.WriteLine($"Total: {(detail.Cantidad * detail.Valor):C}");
+                
+                if (UIHelper.Confirm("Do you want to save this detail?"))
+                {
+                    _context.DetalleCompras.Add(detail);
+                    _context.SaveChanges();
 
-                Console.WriteLine("Detalle creado exitosamente.");
+                    UIHelper.ShowSuccess("Detail created successfully.");
+                }
+                else
+                {
+                    UIHelper.ShowWarning("Operation cancelled by user.");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al crear el detalle: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Detalle del error: {ex.InnerException.Message}");
-                }
+                UIHelper.ShowError("Error creating detail", ex);
             }
         }
 
-        private void EditarDetalle()
+        private void UpdateDetail()
         {
+            UIHelper.ShowTitle("Edit Purchase Detail");
+            
             try
             {
-                Console.Write("Ingrese el ID del detalle a editar: ");
-                var id = int.Parse(Console.ReadLine());
-                var detalle = _context.DetalleCompras.Find(id);
-
-                if (detalle != null)
+                // Show list of available details
+                ListDetails();
+                
+                var idStr = UIHelper.RequestInput("Enter the ID of the detail to edit");
+                if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    Console.Write("Ingrese el nuevo ID del producto: ");
-                    var productoId = Console.ReadLine();
+                    UIHelper.ShowWarning("Operation cancelled. The ID is required.");
+                    return;
+                }
+                
+                var id = int.Parse(idStr);
+                var detail = _context.DetalleCompras.Find(id);
+
+                if (detail != null)
+                {
+                    // Show current information
+                    UIHelper.ShowTitle("Current Information");
+                    Console.WriteLine($"ID: {detail.Id}");
+                    Console.WriteLine($"Product: {detail.ProductoId}");
+                    Console.WriteLine($"Purchase: {detail.CompraId}");
+                    Console.WriteLine($"Date: {detail.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Quantity: {detail.Cantidad}");
+                    Console.WriteLine($"Unit price: {detail.Valor:C}");
+                    Console.WriteLine($"Total: {(detail.Cantidad * detail.Valor):C}");
+                    Console.WriteLine("\nEnter new values or leave blank to keep current ones:");
                     
-                    // Verificar que el producto exista
-                    var producto = _context.Productos.Find(productoId);
-                    if (producto == null)
+                    var productId = UIHelper.RequestInput("New product ID", detail.ProductoId);
+                    
+                    // Check that the product exists
+                    var product = _context.Productos.Find(productId);
+                    if (product == null)
                     {
-                        Console.WriteLine("Error: El producto con ID " + productoId + " no existe. Debe crear el producto primero.");
+                        UIHelper.ShowError($"The product with ID {productId} does not exist. You must create the product first.");
                         return;
                     }
                     
-                    Console.Write("Ingrese el nuevo ID de la compra: ");
-                    var compraId = int.Parse(Console.ReadLine());
+                    var purchaseIdStr = UIHelper.RequestInput("New purchase ID", detail.CompraId.ToString());
+                    var purchaseId = int.Parse(purchaseIdStr);
                     
-                    // Verificar que la compra exista
-                    var compra = _context.Compras.Find(compraId);
-                    if (compra == null)
+                    // Check that the purchase exists
+                    var purchase = _context.Compras.Find(purchaseId);
+                    if (purchase == null)
                     {
-                        Console.WriteLine("Error: La compra con ID " + compraId + " no existe. Debe crear la compra primero.");
+                        UIHelper.ShowError($"The purchase with ID {purchaseId} does not exist. You must create the purchase first.");
                         return;
                     }
                     
-                    // Si cambian el producto o la compra, verificar que no exista otro detalle con la misma combinación
-                    if (productoId != detalle.ProductoId || compraId != detalle.CompraId)
+                    // If they change the product or the purchase, check that no detail with the same combination exists
+                    if (productId != detail.ProductoId || purchaseId != detail.CompraId)
                     {
-                        var detalleDuplicado = _context.DetalleCompras.FirstOrDefault(d => 
-                            d.CompraId == compraId && 
-                            d.ProductoId == productoId && 
+                        var duplicateDetail = _context.DetalleCompras.FirstOrDefault(d => 
+                            d.CompraId == purchaseId && 
+                            d.ProductoId == productId && 
                             d.Id != id);
                             
-                        if (detalleDuplicado != null)
+                        if (duplicateDetail != null)
                         {
-                            Console.WriteLine($"Error: Ya existe un detalle para la compra {compraId} y el producto {productoId}.");
+                            UIHelper.ShowError($"A detail for purchase {purchaseId} and product {productId} already exists.");
                             return;
                         }
                     }
                     
-                    detalle.ProductoId = productoId;
-                    detalle.CompraId = compraId;
+                    var dateStr = UIHelper.RequestInput("New date (YYYY-MM-DD)", detail.Fecha.ToString("yyyy-MM-dd"));
+                    var quantityStr = UIHelper.RequestInput("New quantity", detail.Cantidad.ToString());
+                    var valueStr = UIHelper.RequestInput("New unit price", detail.Valor.ToString());
                     
-                    Console.Write("Ingrese la nueva fecha (YYYY-MM-DD): ");
-                    detalle.Fecha = DateTime.Parse(Console.ReadLine());
-                    
-                    Console.Write("Ingrese la nueva cantidad: ");
-                    detalle.Cantidad = int.Parse(Console.ReadLine());
-                    
-                    Console.Write("Ingrese el nuevo valor unitario: ");
-                    detalle.Valor = decimal.Parse(Console.ReadLine());
+                    detail.ProductoId = productId;
+                    detail.CompraId = purchaseId;
+                    detail.Fecha = DateTime.Parse(dateStr);
+                    detail.Cantidad = int.Parse(quantityStr);
+                    detail.Valor = decimal.Parse(valueStr);
 
-                    _context.Update(detalle);
-                    _context.SaveChanges();
-
-                    Console.WriteLine("Detalle actualizado exitosamente.");
+                    // Show summary before confirming
+                    UIHelper.ShowTitle("Updated Detail Summary");
+                    Console.WriteLine($"ID: {detail.Id}");
+                    Console.WriteLine($"Product: {detail.ProductoId}");
+                    Console.WriteLine($"Purchase: {detail.CompraId}");
+                    Console.WriteLine($"Date: {detail.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Quantity: {detail.Cantidad}");
+                    Console.WriteLine($"Unit price: {detail.Valor:C}");
+                    Console.WriteLine($"Total: {(detail.Cantidad * detail.Valor):C}");
+                    
+                    if (UIHelper.Confirm("Are you sure you want to apply these changes?"))
+                    {
+                        _context.Update(detail);
+                        _context.SaveChanges();
+                        UIHelper.ShowSuccess("Detail updated successfully.");
+                    }
+                    else
+                    {
+                        UIHelper.ShowWarning("Operation cancelled by user.");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Detalle no encontrado.");
+                    UIHelper.ShowError("Detail not found.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al actualizar el detalle: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Detalle del error: {ex.InnerException.Message}");
-                }
+                UIHelper.ShowError("Error updating detail", ex);
             }
         }
 
-        private void EliminarDetalle()
+        private void DeleteDetail()
         {
+            UIHelper.ShowTitle("Delete Purchase Detail");
+            
             try
             {
-                Console.Write("Ingrese el ID del detalle a eliminar: ");
-                var id = int.Parse(Console.ReadLine());
-                var detalle = _context.DetalleCompras.Find(id);
-
-                if (detalle != null)
+                // Show list of available details
+                ListDetails();
+                
+                var idStr = UIHelper.RequestInput("Enter the ID of the detail to delete");
+                if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    _context.DetalleCompras.Remove(detalle);
-                    _context.SaveChanges();
+                    UIHelper.ShowWarning("Operation cancelled. The ID is required.");
+                    return;
+                }
+                
+                var id = int.Parse(idStr);
+                var detail = _context.DetalleCompras.Find(id);
 
-                    Console.WriteLine("Detalle eliminado exitosamente.");
+                if (detail != null)
+                {
+                    // Show information of the detail to delete
+                    UIHelper.ShowTitle("Detail Information to Delete");
+                    Console.WriteLine($"ID: {detail.Id}");
+                    Console.WriteLine($"Product: {detail.ProductoId}");
+                    Console.WriteLine($"Purchase: {detail.CompraId}");
+                    Console.WriteLine($"Date: {detail.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Quantity: {detail.Cantidad}");
+                    Console.WriteLine($"Unit price: {detail.Valor:C}");
+                    Console.WriteLine($"Total: {(detail.Cantidad * detail.Valor):C}");
+                    
+                    if (UIHelper.Confirm("Are you sure you want to delete this detail?"))
+                    {
+                        _context.DetalleCompras.Remove(detail);
+                        _context.SaveChanges();
+                        UIHelper.ShowSuccess("Detail deleted successfully.");
+                    }
+                    else
+                    {
+                        UIHelper.ShowWarning("Operation cancelled by user.");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Detalle no encontrado.");
+                    UIHelper.ShowError("Detail not found.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al eliminar el detalle: {ex.Message}");
+                UIHelper.ShowError("Error deleting detail", ex);
             }
         }
+        
+        // Maintain backward compatibility with Spanish methods
+        private void ListarDetalles() => ListDetails();
+        private void CrearDetalle() => CreateDetail();
+        private void EditarDetalle() => UpdateDetail();
+        private void EliminarDetalle() => DeleteDetail();
     }
 }

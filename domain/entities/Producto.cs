@@ -18,10 +18,11 @@ namespace sgi_app.domain.entities
         
         public int StockMax { get; set; }
         
+        [Column("Precio", TypeName = "decimal(10,2)")]
+        public decimal Precio { get; set; }
+        
         public DateTime CreatedAt { get; set; }
         
         public DateTime UpdatedAt { get; set; }
-        
-        public string Barcode { get; set; }
     }
 }
