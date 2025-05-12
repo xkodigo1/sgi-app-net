@@ -20,153 +20,153 @@ namespace sgi_app.application.ui
         {
             while (true)
             {
-                UIHelper.MostrarTitulo("Panel de Planes Promocionales");
+                UIHelper.ShowTitle("Promotional Plans Panel");
                 
-                var opciones = new Dictionary<string, string>
+                var options = new Dictionary<string, string>
                 {
-                    { "1", "Listar Planes Promocionales" },
-                    { "2", "Crear Nuevo Plan Promocional" },
-                    { "3", "Editar Plan Promocional" },
-                    { "4", "Eliminar Plan Promocional" },
-                    { "5", "Agregar Productos al Plan" },
-                    { "6", "Ver Productos en Plan" },
-                    { "7", "Eliminar Productos del Plan" }
+                    { "1", "List Promotional Plans" },
+                    { "2", "Create New Promotional Plan" },
+                    { "3", "Edit Promotional Plan" },
+                    { "4", "Delete Promotional Plan" },
+                    { "5", "Add Products to Plan" },
+                    { "6", "View Products in Plan" },
+                    { "7", "Remove Products from Plan" }
                 };
                 
-                UIHelper.MostrarMenuOpciones(opciones);
+                UIHelper.ShowMenuOptions(options);
 
                 var option = Console.ReadLine();
 
                 switch (option)
                 {
                     case "1":
-                        ListarPlanes();
+                        ListPlans();
                         break;
                     case "2":
-                        CrearPlan();
+                        CreatePlan();
                         break;
                     case "3":
-                        EditarPlan();
+                        UpdatePlan();
                         break;
                     case "4":
-                        EliminarPlan();
+                        DeletePlan();
                         break;
                     case "5":
-                        AgregarProductosAlPlan();
+                        AddProductsToPlan();
                         break;
                     case "6":
-                        VerProductosEnPlan();
+                        ViewProductsInPlan();
                         break;
                     case "7":
-                        EliminarProductosDelPlan();
+                        RemoveProductsFromPlan();
                         break;
                     case "0":
                         return;
                     default:
-                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        UIHelper.ShowWarning("Invalid option. Please try again.");
                         Console.ReadKey();
                         break;
                 }
             }
         }
 
-        private void ListarPlanes()
+        private void ListPlans()
         {
-            UIHelper.MostrarTitulo("Listado de Planes Promocionales");
+            UIHelper.ShowTitle("Promotional Plans List");
             
             try
             {
-                var planes = _context.Set<Plan>().ToList();
+                var plans = _context.Set<Plan>().ToList();
                 
-                var columnas = new Dictionary<string, Func<Plan, object>>
+                var columns = new Dictionary<string, Func<Plan, object>>
                 {
                     { "ID", p => p.Id },
-                    { "Nombre", p => p.Nombre },
-                    { "Fecha Inicio", p => p.FechaInicio.ToShortDateString() },
-                    { "Fecha Fin", p => p.FechaFin.ToShortDateString() },
-                    { "Descuento %", p => p.Dcto }
+                    { "Name", p => p.Nombre },
+                    { "Start Date", p => p.FechaInicio.ToShortDateString() },
+                    { "End Date", p => p.FechaFin.ToShortDateString() },
+                    { "Discount %", p => p.Dcto }
                 };
                 
-                UIHelper.DibujarTabla(planes, columnas, "Planes Promocionales Activos");
+                UIHelper.DrawTable(plans, columns, "Active Promotional Plans");
                 
-                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al listar los planes", ex);
+                UIHelper.ShowError("Error listing plans", ex);
             }
         }
 
-        private void CrearPlan()
+        private void CreatePlan()
         {
-            UIHelper.MostrarTitulo("Crear Nuevo Plan Promocional");
+            UIHelper.ShowTitle("Create New Promotional Plan");
             
             try
             {
-                var nombre = UIHelper.SolicitarEntrada("Ingrese el nombre del plan");
-                if (string.IsNullOrWhiteSpace(nombre))
+                var name = UIHelper.RequestInput("Enter the plan name");
+                if (string.IsNullOrWhiteSpace(name))
                 {
-                    UIHelper.MostrarAdvertencia("El nombre es obligatorio.");
+                    UIHelper.ShowWarning("The name is required.");
                     return;
                 }
 
-                var fechaInicioStr = UIHelper.SolicitarEntrada("Ingrese la fecha de inicio (YYYY-MM-DD)");
-                var fechaInicio = DateTime.Parse(fechaInicioStr);
+                var startDateStr = UIHelper.RequestInput("Enter the start date (YYYY-MM-DD)");
+                var startDate = DateTime.Parse(startDateStr);
 
-                var fechaFinStr = UIHelper.SolicitarEntrada("Ingrese la fecha de fin (YYYY-MM-DD)");
-                var fechaFin = DateTime.Parse(fechaFinStr);
+                var endDateStr = UIHelper.RequestInput("Enter the end date (YYYY-MM-DD)");
+                var endDate = DateTime.Parse(endDateStr);
 
-                if (fechaFin <= fechaInicio)
+                if (endDate <= startDate)
                 {
-                    UIHelper.MostrarError("La fecha de fin debe ser posterior a la fecha de inicio.");
+                    UIHelper.ShowError("The end date must be after the start date.");
                     return;
                 }
 
-                var dctoStr = UIHelper.SolicitarEntrada("Ingrese el porcentaje de descuento");
-                var dcto = double.Parse(dctoStr);
+                var discountStr = UIHelper.RequestInput("Enter the discount percentage");
+                var discount = double.Parse(discountStr);
 
-                if (dcto <= 0 || dcto > 100)
+                if (discount <= 0 || discount > 100)
                 {
-                    UIHelper.MostrarError("El descuento debe estar entre 0 y 100.");
+                    UIHelper.ShowError("The discount must be between 0 and 100.");
                     return;
                 }
 
                 var plan = new Plan
                 {
-                    Nombre = nombre,
-                    FechaInicio = fechaInicio,
-                    FechaFin = fechaFin,
-                    Dcto = dcto
+                    Nombre = name,
+                    FechaInicio = startDate,
+                    FechaFin = endDate,
+                    Dcto = discount
                 };
 
-                if (UIHelper.Confirmar("¿Desea guardar este plan promocional?"))
+                if (UIHelper.Confirm("Do you want to save this promotional plan?"))
                 {
                     _context.Set<Plan>().Add(plan);
                     _context.SaveChanges();
-                    UIHelper.MostrarExito("Plan promocional creado exitosamente.");
+                    UIHelper.ShowSuccess("Promotional plan created successfully.");
                 }
                 else
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                    UIHelper.ShowWarning("Operation cancelled by user.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al crear el plan", ex);
+                UIHelper.ShowError("Error creating plan", ex);
             }
         }
 
-        private void EditarPlan()
+        private void UpdatePlan()
         {
-            UIHelper.MostrarTitulo("Editar Plan Promocional");
+            UIHelper.ShowTitle("Edit Promotional Plan");
             
             try
             {
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del plan a editar");
+                var idStr = UIHelper.RequestInput("Enter the ID of the plan to edit");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("El ID es obligatorio.");
+                    UIHelper.ShowWarning("The ID is required.");
                     return;
                 }
 
@@ -175,58 +175,58 @@ namespace sgi_app.application.ui
 
                 if (plan != null)
                 {
-                    UIHelper.MostrarTitulo("Información Actual");
+                    UIHelper.ShowTitle("Current Information");
                     Console.WriteLine($"ID: {plan.Id}");
-                    Console.WriteLine($"Nombre: {plan.Nombre}");
-                    Console.WriteLine($"Fecha Inicio: {plan.FechaInicio.ToShortDateString()}");
-                    Console.WriteLine($"Fecha Fin: {plan.FechaFin.ToShortDateString()}");
-                    Console.WriteLine($"Descuento: {plan.Dcto}%");
-                    Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
+                    Console.WriteLine($"Name: {plan.Nombre}");
+                    Console.WriteLine($"Start Date: {plan.FechaInicio.ToShortDateString()}");
+                    Console.WriteLine($"End Date: {plan.FechaFin.ToShortDateString()}");
+                    Console.WriteLine($"Discount: {plan.Dcto}%");
+                    Console.WriteLine("\nEnter new values or leave blank to keep current ones:");
 
-                    var nombre = UIHelper.SolicitarEntrada("Nuevo nombre", plan.Nombre);
-                    plan.Nombre = nombre;
+                    var name = UIHelper.RequestInput("New name", plan.Nombre);
+                    plan.Nombre = name;
 
-                    var fechaInicioStr = UIHelper.SolicitarEntrada("Nueva fecha de inicio (YYYY-MM-DD)", plan.FechaInicio.ToString("yyyy-MM-dd"));
-                    plan.FechaInicio = DateTime.Parse(fechaInicioStr);
+                    var startDateStr = UIHelper.RequestInput("New start date (YYYY-MM-DD)", plan.FechaInicio.ToString("yyyy-MM-dd"));
+                    plan.FechaInicio = DateTime.Parse(startDateStr);
 
-                    var fechaFinStr = UIHelper.SolicitarEntrada("Nueva fecha de fin (YYYY-MM-DD)", plan.FechaFin.ToString("yyyy-MM-dd"));
-                    plan.FechaFin = DateTime.Parse(fechaFinStr);
+                    var endDateStr = UIHelper.RequestInput("New end date (YYYY-MM-DD)", plan.FechaFin.ToString("yyyy-MM-dd"));
+                    plan.FechaFin = DateTime.Parse(endDateStr);
 
-                    var dctoStr = UIHelper.SolicitarEntrada("Nuevo porcentaje de descuento", plan.Dcto.ToString());
-                    plan.Dcto = double.Parse(dctoStr);
+                    var discountStr = UIHelper.RequestInput("New discount percentage", plan.Dcto.ToString());
+                    plan.Dcto = double.Parse(discountStr);
 
-                    if (UIHelper.Confirmar("¿Confirma estos cambios?"))
+                    if (UIHelper.Confirm("Do you confirm these changes?"))
                     {
                         _context.Update(plan);
                         _context.SaveChanges();
-                        UIHelper.MostrarExito("Plan promocional actualizado exitosamente.");
+                        UIHelper.ShowSuccess("Promotional plan updated successfully.");
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Plan no encontrado.");
+                    UIHelper.ShowError("Plan not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al actualizar el plan", ex);
+                UIHelper.ShowError("Error updating plan", ex);
             }
         }
 
-        private void EliminarPlan()
+        private void DeletePlan()
         {
-            UIHelper.MostrarTitulo("Eliminar Plan Promocional");
+            UIHelper.ShowTitle("Delete Promotional Plan");
             
             try
             {
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del plan a eliminar");
+                var idStr = UIHelper.RequestInput("Enter the ID of the plan to delete");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("El ID es obligatorio.");
+                    UIHelper.ShowWarning("The ID is required.");
                     return;
                 }
 
@@ -235,196 +235,350 @@ namespace sgi_app.application.ui
 
                 if (plan != null)
                 {
-                    UIHelper.MostrarTitulo("Información del Plan a Eliminar");
+                    UIHelper.ShowTitle("Information of Plan to Delete");
                     Console.WriteLine($"ID: {plan.Id}");
-                    Console.WriteLine($"Nombre: {plan.Nombre}");
-                    Console.WriteLine($"Fecha Inicio: {plan.FechaInicio.ToShortDateString()}");
-                    Console.WriteLine($"Fecha Fin: {plan.FechaFin.ToShortDateString()}");
-                    Console.WriteLine($"Descuento: {plan.Dcto}%");
+                    Console.WriteLine($"Name: {plan.Nombre}");
+                    Console.WriteLine($"Start Date: {plan.FechaInicio.ToShortDateString()}");
+                    Console.WriteLine($"End Date: {plan.FechaFin.ToShortDateString()}");
+                    Console.WriteLine($"Discount: {plan.Dcto}%");
 
-                    if (UIHelper.Confirmar("¿Está seguro que desea eliminar este plan?"))
+                    if (UIHelper.Confirm("Are you sure you want to delete this plan?"))
                     {
-                        // Primero eliminar las relaciones con productos
-                        var productosEnPlan = _context.Set<PlanProducto>().Where(pp => pp.PlanId == id);
-                        _context.Set<PlanProducto>().RemoveRange(productosEnPlan);
+                        // First delete relationships with products
+                        var productsInPlan = _context.Set<PlanProducto>().Where(pp => pp.PlanId == id);
+                        _context.Set<PlanProducto>().RemoveRange(productsInPlan);
                         
-                        // Luego eliminar el plan
+                        // Then delete the plan
                         _context.Set<Plan>().Remove(plan);
                         _context.SaveChanges();
-                        UIHelper.MostrarExito("Plan promocional eliminado exitosamente.");
+                        UIHelper.ShowSuccess("Promotional plan and its product relationships deleted successfully.");
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Plan no encontrado.");
+                    UIHelper.ShowError("Plan not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al eliminar el plan", ex);
+                UIHelper.ShowError("Error deleting plan", ex);
             }
         }
 
-        private void AgregarProductosAlPlan()
+        private void AddProductsToPlan()
         {
-            UIHelper.MostrarTitulo("Agregar Productos al Plan");
+            UIHelper.ShowTitle("Add Products to Promotional Plan");
             
             try
             {
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del plan");
-                if (string.IsNullOrWhiteSpace(idStr))
-                {
-                    UIHelper.MostrarAdvertencia("El ID del plan es obligatorio.");
-                    return;
-                }
-
-                var planId = int.Parse(idStr);
-                var plan = _context.Set<Plan>().Find(planId);
-
-                if (plan == null)
-                {
-                    UIHelper.MostrarError("Plan no encontrado.");
-                    return;
-                }
-
-                while (true)
-                {
-                    var productoId = UIHelper.SolicitarEntrada("Ingrese el ID del producto (0 para terminar)");
-                    if (productoId == "0") break;
-
-                    var producto = _context.Set<Producto>().Find(productoId);
-                    if (producto == null)
-                    {
-                        UIHelper.MostrarError("Producto no encontrado.");
-                        continue;
-                    }
-
-                    // Verificar si el producto ya está en el plan
-                    var existente = _context.Set<PlanProducto>()
-                        .Any(pp => pp.PlanId == planId && pp.ProductoId == productoId);
-
-                    if (existente)
-                    {
-                        UIHelper.MostrarAdvertencia("Este producto ya está en el plan.");
-                        continue;
-                    }
-
-                    var planProducto = new PlanProducto
-                    {
-                        PlanId = planId,
-                        ProductoId = productoId
-                    };
-
-                    _context.Set<PlanProducto>().Add(planProducto);
-                    _context.SaveChanges();
-                    UIHelper.MostrarExito($"Producto {productoId} agregado al plan.");
-                }
-            }
-            catch (Exception ex)
-            {
-                UIHelper.MostrarError("Error al agregar productos al plan", ex);
-            }
-        }
-
-        private void VerProductosEnPlan()
-        {
-            UIHelper.MostrarTitulo("Ver Productos en Plan");
-            
-            try
-            {
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del plan");
-                if (string.IsNullOrWhiteSpace(idStr))
-                {
-                    UIHelper.MostrarAdvertencia("El ID del plan es obligatorio.");
-                    return;
-                }
-
-                var planId = int.Parse(idStr);
+                // First select the plan
+                var plans = _context.Set<Plan>().ToList();
                 
-                // Obtener los productos usando una consulta directa
-                var productos = _context.Set<Producto>()
-                    .Join(_context.Set<PlanProducto>(),
-                        p => p.Id,
-                        pp => pp.ProductoId,
-                        (p, pp) => new { Producto = p, PlanProducto = pp })
-                    .Where(x => x.PlanProducto.PlanId == planId)
-                    .Select(x => x.Producto)
-                    .ToList();
-
-                if (!productos.Any())
+                if (!plans.Any())
                 {
-                    UIHelper.MostrarAdvertencia("No hay productos en este plan.");
+                    UIHelper.ShowError("No promotional plans available. Create a plan first.");
                     return;
                 }
-
-                var columnas = new Dictionary<string, Func<Producto, object>>
+                
+                var planColumns = new Dictionary<string, Func<Plan, object>>
                 {
                     { "ID", p => p.Id },
-                    { "Nombre", p => p.Nombre },
-                    { "Precio", p => p.Precio.ToString("C2") },
+                    { "Name", p => p.Nombre },
+                    { "Start Date", p => p.FechaInicio.ToShortDateString() },
+                    { "End Date", p => p.FechaFin.ToShortDateString() },
+                    { "Discount %", p => p.Dcto }
+                };
+                
+                UIHelper.DrawTable(plans, planColumns, "Available Promotional Plans");
+                
+                var planIdStr = UIHelper.RequestInput("Enter the ID of the plan to add products to");
+                var planId = int.Parse(planIdStr);
+                
+                var plan = _context.Set<Plan>().Find(planId);
+                if (plan == null)
+                {
+                    UIHelper.ShowError("Plan not found.");
+                    return;
+                }
+                
+                // Now show available products
+                var products = _context.Productos.ToList();
+                
+                if (!products.Any())
+                {
+                    UIHelper.ShowError("No products available to add to the plan.");
+                    return;
+                }
+                
+                // Get products already in the plan to filter them out
+                var existingProductIds = _context.Set<PlanProducto>()
+                    .Where(pp => pp.PlanId == planId)
+                    .Select(pp => pp.ProductoId)
+                    .ToList();
+                
+                // Show only products not already in the plan
+                var availableProducts = products.Where(p => !existingProductIds.Contains(p.Id)).ToList();
+                
+                if (!availableProducts.Any())
+                {
+                    UIHelper.ShowWarning("All products are already included in this plan.");
+                    return;
+                }
+                
+                var productColumns = new Dictionary<string, Func<Producto, object>>
+                {
+                    { "ID", p => p.Id },
+                    { "Name", p => p.Nombre },
+                    { "Unit Price", p => $"{p.Precio:C}" },
                     { "Stock", p => p.Stock }
                 };
-
-                UIHelper.DibujarTabla(productos, columnas, $"Productos en Plan");
                 
-                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                UIHelper.DrawTable(availableProducts, productColumns, "Available Products");
+                
+                var productIdStr = UIHelper.RequestInput("Enter the ID of the product to add to the plan (or leave blank to finish)");
+                
+                while (!string.IsNullOrWhiteSpace(productIdStr))
+                {
+                    var productId = productIdStr;
+                    
+                    var product = _context.Productos.Find(productId);
+                    if (product == null)
+                    {
+                        UIHelper.ShowError($"Product with ID {productId} not found.");
+                    }
+                    else if (existingProductIds.Contains(productId))
+                    {
+                        UIHelper.ShowWarning($"Product with ID {productId} is already in this plan.");
+                    }
+                    else
+                    {
+                        var planProduct = new PlanProducto
+                        {
+                            PlanId = planId,
+                            ProductoId = productId
+                        };
+                        
+                        _context.Set<PlanProducto>().Add(planProduct);
+                        _context.SaveChanges();
+                        
+                        existingProductIds.Add(productId);
+                        UIHelper.ShowSuccess($"Product '{product.Nombre}' added to plan '{plan.Nombre}'.");
+                    }
+                    
+                    productIdStr = UIHelper.RequestInput("Enter the ID of another product to add (or leave blank to finish)");
+                }
+            }
+            catch (Exception ex)
+            {
+                UIHelper.ShowError("Error adding products to plan", ex);
+            }
+        }
+
+        private void ViewProductsInPlan()
+        {
+            UIHelper.ShowTitle("View Products in Promotional Plan");
+            
+            try
+            {
+                // First select the plan
+                var plans = _context.Set<Plan>().ToList();
+                
+                if (!plans.Any())
+                {
+                    UIHelper.ShowError("No promotional plans available.");
+                    return;
+                }
+                
+                var planColumns = new Dictionary<string, Func<Plan, object>>
+                {
+                    { "ID", p => p.Id },
+                    { "Name", p => p.Nombre },
+                    { "Start Date", p => p.FechaInicio.ToShortDateString() },
+                    { "End Date", p => p.FechaFin.ToShortDateString() },
+                    { "Discount %", p => p.Dcto }
+                };
+                
+                UIHelper.DrawTable(plans, planColumns, "Available Promotional Plans");
+                
+                var planIdStr = UIHelper.RequestInput("Enter the ID of the plan to view products");
+                var planId = int.Parse(planIdStr);
+                
+                var plan = _context.Set<Plan>().Find(planId);
+                if (plan == null)
+                {
+                    UIHelper.ShowError("Plan not found.");
+                    return;
+                }
+                
+                // Get products in the plan
+                var planProducts = _context.Set<PlanProducto>()
+                    .Where(pp => pp.PlanId == planId)
+                    .ToList();
+                
+                if (!planProducts.Any())
+                {
+                    UIHelper.ShowWarning($"No products are associated with plan '{plan.Nombre}'.");
+                    return;
+                }
+                
+                // Create a list to store product information
+                var productsInfo = new List<(string Id, string Nombre, decimal ValorUnitario, decimal ValorConDescuento)>();
+                
+                foreach (var pp in planProducts)
+                {
+                    var product = _context.Productos.Find(pp.ProductoId);
+                    if (product != null)
+                    {
+                        var discountedPrice = product.Precio * (1 - (decimal)(plan.Dcto / 100));
+                        productsInfo.Add((product.Id, product.Nombre, product.Precio, discountedPrice));
+                    }
+                }
+                
+                // Show the products with their discounted prices
+                UIHelper.ShowTitle($"Products in Plan: {plan.Nombre}");
+                Console.WriteLine($"Discount: {plan.Dcto}%");
+                Console.WriteLine($"Valid from {plan.FechaInicio.ToShortDateString()} to {plan.FechaFin.ToShortDateString()}");
+                Console.WriteLine();
+                
+                Console.WriteLine("┌───────────┬────────────────────────────────┬──────────────┬──────────────────┐");
+                Console.WriteLine("│ ID        │ Product Name                   │ Regular Price│ Discounted Price │");
+                Console.WriteLine("├───────────┼────────────────────────────────┼──────────────┼──────────────────┤");
+                
+                foreach (var info in productsInfo)
+                {
+                    Console.WriteLine($"│ {info.Id.PadRight(9)} │ {info.Nombre.PadRight(30)} │ {info.ValorUnitario,12:C} │ {info.ValorConDescuento,16:C} │");
+                }
+                
+                Console.WriteLine("└───────────┴────────────────────────────────┴──────────────┴──────────────────┘");
+                
+                Console.WriteLine($"\nTotal products in plan: {productsInfo.Count}");
+                Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al ver productos en el plan", ex);
+                UIHelper.ShowError("Error viewing products in plan", ex);
             }
         }
 
-        private void EliminarProductosDelPlan()
+        private void RemoveProductsFromPlan()
         {
-            UIHelper.MostrarTitulo("Eliminar Productos del Plan");
+            UIHelper.ShowTitle("Remove Products from Promotional Plan");
             
             try
             {
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del plan");
-                if (string.IsNullOrWhiteSpace(idStr))
+                // First select the plan
+                var plans = _context.Set<Plan>().ToList();
+                
+                if (!plans.Any())
                 {
-                    UIHelper.MostrarAdvertencia("El ID del plan es obligatorio.");
+                    UIHelper.ShowError("No promotional plans available.");
                     return;
                 }
-
-                var planId = int.Parse(idStr);
+                
+                var planColumns = new Dictionary<string, Func<Plan, object>>
+                {
+                    { "ID", p => p.Id },
+                    { "Name", p => p.Nombre },
+                    { "Start Date", p => p.FechaInicio.ToShortDateString() },
+                    { "End Date", p => p.FechaFin.ToShortDateString() },
+                    { "Discount %", p => p.Dcto }
+                };
+                
+                UIHelper.DrawTable(plans, planColumns, "Available Promotional Plans");
+                
+                var planIdStr = UIHelper.RequestInput("Enter the ID of the plan to remove products from");
+                var planId = int.Parse(planIdStr);
+                
                 var plan = _context.Set<Plan>().Find(planId);
-
                 if (plan == null)
                 {
-                    UIHelper.MostrarError("Plan no encontrado.");
+                    UIHelper.ShowError("Plan not found.");
                     return;
                 }
-
-                while (true)
+                
+                // Get products in the plan
+                var planProducts = _context.Set<PlanProducto>()
+                    .Where(pp => pp.PlanId == planId)
+                    .ToList();
+                
+                if (!planProducts.Any())
                 {
-                    var productoId = UIHelper.SolicitarEntrada("Ingrese el ID del producto a eliminar (0 para terminar)");
-                    if (productoId == "0") break;
-
-                    var planProducto = _context.Set<PlanProducto>()
-                        .FirstOrDefault(pp => pp.PlanId == planId && pp.ProductoId == productoId);
-
-                    if (planProducto == null)
+                    UIHelper.ShowWarning($"No products are associated with plan '{plan.Nombre}'.");
+                    return;
+                }
+                
+                // Show products in the plan
+                var productsInfo = new List<(int RelationId, string ProductId, string ProductName)>();
+                int index = 1;
+                
+                foreach (var pp in planProducts)
+                {
+                    var product = _context.Productos.Find(pp.ProductoId);
+                    if (product != null)
                     {
-                        UIHelper.MostrarAdvertencia("Este producto no está en el plan.");
-                        continue;
+                        productsInfo.Add((index++, product.Id, product.Nombre));
                     }
-
-                    _context.Set<PlanProducto>().Remove(planProducto);
+                }
+                
+                UIHelper.ShowTitle($"Products in Plan: {plan.Nombre}");
+                
+                Console.WriteLine("┌───────┬───────────┬────────────────────────────────┐");
+                Console.WriteLine("│ Index │ ID        │ Product Name                   │");
+                Console.WriteLine("├───────┼───────────┼────────────────────────────────┤");
+                
+                foreach (var info in productsInfo)
+                {
+                    Console.WriteLine($"│ {info.RelationId,5} │ {info.ProductId.PadRight(9)} │ {info.ProductName.PadRight(30)} │");
+                }
+                
+                Console.WriteLine("└───────┴───────────┴────────────────────────────────┘");
+                
+                var productIdStr = UIHelper.RequestInput("Enter the ID of the product to remove from the plan");
+                
+                if (string.IsNullOrWhiteSpace(productIdStr))
+                {
+                    UIHelper.ShowWarning("Operation cancelled.");
+                    return;
+                }
+                
+                var productId = productIdStr;
+                var planProduct = planProducts.FirstOrDefault(pp => pp.ProductoId == productId);
+                
+                if (planProduct == null)
+                {
+                    UIHelper.ShowError($"Product with ID {productId} is not in this plan.");
+                    return;
+                }
+                
+                if (UIHelper.Confirm($"Are you sure you want to remove this product from plan '{plan.Nombre}'?"))
+                {
+                    _context.Set<PlanProducto>().Remove(planProduct);
                     _context.SaveChanges();
-                    UIHelper.MostrarExito($"Producto {productoId} eliminado del plan.");
+                    UIHelper.ShowSuccess("Product removed from plan successfully.");
+                }
+                else
+                {
+                    UIHelper.ShowWarning("Operation cancelled by user.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al eliminar productos del plan", ex);
+                UIHelper.ShowError("Error removing products from plan", ex);
             }
         }
+        
+        // Maintain backward compatibility with Spanish methods
+        private void ListarPlanes() => ListPlans();
+        private void CrearPlan() => CreatePlan();
+        private void EditarPlan() => UpdatePlan();
+        private void EliminarPlan() => DeletePlan();
+        private void AgregarProductosAlPlan() => AddProductsToPlan();
+        private void VerProductosEnPlan() => ViewProductsInPlan();
+        private void EliminarProductosDelPlan() => RemoveProductsFromPlan();
     }
 } 

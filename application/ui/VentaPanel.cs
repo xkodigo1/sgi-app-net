@@ -21,77 +21,77 @@ namespace sgi_app.application.ui
         {
             while (true)
             {
-                UIHelper.MostrarTitulo("Panel de Ventas");
+                UIHelper.ShowTitle("Sales Panel");
                 
-                var opciones = new Dictionary<string, string>
+                var options = new Dictionary<string, string>
                 {
-                    { "1", "Listar Ventas" },
-                    { "2", "Crear Nueva Venta" },
-                    { "3", "Editar Venta" },
-                    { "4", "Eliminar Venta" }
+                    { "1", "List Sales" },
+                    { "2", "Create New Sale" },
+                    { "3", "Edit Sale" },
+                    { "4", "Delete Sale" }
                 };
                 
-                UIHelper.MostrarMenuOpciones(opciones);
+                UIHelper.ShowMenuOptions(options);
 
                 var option = Console.ReadLine();
 
                 switch (option)
                 {
                     case "1":
-                        ListarVentas();
+                        ListSales();
                         break;
                     case "2":
-                        await CrearVentaAsync();
+                        await CreateSaleAsync();
                         break;
                     case "3":
-                        await EditarVentaAsync();
+                        await UpdateSaleAsync();
                         break;
                     case "4":
-                        await EliminarVentaAsync();
+                        await DeleteSaleAsync();
                         break;
                     case "0":
                         return;
                     default:
-                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        UIHelper.ShowWarning("Invalid option. Please try again.");
                         Console.ReadKey();
                         break;
                 }
             }
         }
 
-        private void ListarVentas()
+        private void ListSales()
         {
-            UIHelper.MostrarTitulo("Listado de Ventas");
+            UIHelper.ShowTitle("Sales List");
             
             try
             {
                 var ventas = _context.Ventas.ToList();
                 
-                // Definir las columnas y los valores a mostrar
-                var columnas = new Dictionary<string, Func<Venta, object>>
+                // Define columns and values to display
+                var columns = new Dictionary<string, Func<Venta, object>>
                 {
                     { "ID", v => v.Id },
-                    { "Empleado", v => ObtenerNombreEmpleado(v.TerceroEnId) },
-                    { "Cliente", v => v.TerceroCliId },
-                    { "Factura", v => v.FactId },
-                    { "Fecha", v => v.Fecha.ToShortDateString() },
-                    { "Total", v => ObtenerTotalVenta(v.Id) }
+                    { "Employee", v => GetEmployeeName(v.TerceroEnId) },
+                    { "Client", v => v.TerceroCliId },
+                    { "Invoice", v => v.FactId },
+                    { "Date", v => v.Fecha.ToShortDateString() },
+                    { "Total", v => GetSaleTotal(v.Id) }
                 };
                 
-                // Usar el método DibujarTabla para mostrar los datos formateados
-                UIHelper.DibujarTabla(ventas, columnas, "Registro de Ventas");
+                // Use DrawTable method to show formatted data
+                UIHelper.DrawTable(ventas, columns, "Sales Records");
                 
-                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al listar las ventas", ex);
+                UIHelper.ShowError("Error listing sales", ex);
             }
         }
         
-        // Método auxiliar para obtener el nombre del empleado
-        private string ObtenerNombreEmpleado(string terceroId)
+        // Helper method to get employee name
+        private string GetEmployeeName(string terceroId)
         {
             try
             {
@@ -108,8 +108,8 @@ namespace sgi_app.application.ui
             }
         }
         
-        // Método auxiliar para calcular el total de la venta
-        private string ObtenerTotalVenta(int ventaId)
+        // Helper method to calculate sale total
+        private string GetSaleTotal(int ventaId)
         {
             try
             {
@@ -119,24 +119,24 @@ namespace sgi_app.application.ui
             }
             catch
             {
-                return "No calculado";
+                return "Not calculated";
             }
         }
 
-        private async Task CrearVentaAsync()
+        private async Task CreateSaleAsync()
         {
-            UIHelper.MostrarTitulo("Crear Nueva Venta");
+            UIHelper.ShowTitle("Create New Sale");
             
             try
             {
                 // Mostrar empleados disponibles
-                await MostrarEmpleadosDisponibles();
+                await ShowAvailableEmployees();
                 
-                var empleadoIdStr = UIHelper.SolicitarEntrada("Ingrese el ID del empleado");
+                var empleadoIdStr = UIHelper.SolicitarEntrada("Enter the ID of the employee");
                 if (string.IsNullOrWhiteSpace(empleadoIdStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID del empleado es obligatorio.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowWarning("Operation cancelled. The employee ID is required.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                     return;
                 }
@@ -147,8 +147,8 @@ namespace sgi_app.application.ui
                 var empleado = await _context.Empleados.FindAsync(empleadoId);
                 if (empleado == null)
                 {
-                    UIHelper.MostrarError($"El empleado con ID {empleadoId} no existe.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowError($"Employee with ID {empleadoId} does not exist.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                     return;
                 }
@@ -158,20 +158,20 @@ namespace sgi_app.application.ui
                 var terceroEmpleado = await _context.Terceros.FindAsync(terceroEmpleadoId);
                 if (terceroEmpleado == null)
                 {
-                    UIHelper.MostrarError($"El tercero asociado al empleado no existe.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowError($"The third party associated with the employee does not exist.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                     return;
                 }
                 
                 // Mostrar clientes disponibles
-                await MostrarClientesDisponibles();
+                await ShowAvailableClients();
                 
-                var clienteId = UIHelper.SolicitarEntrada("Ingrese el ID del cliente");
+                var clienteId = UIHelper.SolicitarEntrada("Enter the ID of the client");
                 if (string.IsNullOrWhiteSpace(clienteId))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID del cliente es obligatorio.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowWarning("Operation cancelled. The client ID is required.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                     return;
                 }
@@ -180,24 +180,24 @@ namespace sgi_app.application.ui
                 var cliente = await _context.Terceros.FindAsync(clienteId);
                 if (cliente == null)
                 {
-                    UIHelper.MostrarError($"El cliente con ID {clienteId} no existe. Debe crear el cliente primero.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowError($"Client with ID {clienteId} does not exist. You must create the client first.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                     return;
                 }
                 
-                var factIdStr = UIHelper.SolicitarEntrada("Ingrese el ID de la factura");
+                var factIdStr = UIHelper.SolicitarEntrada("Enter the ID of the invoice");
                 if (string.IsNullOrWhiteSpace(factIdStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID de la factura es obligatorio.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowWarning("Operation cancelled. The invoice ID is required.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                     return;
                 }
                 
                 var factId = int.Parse(factIdStr);
                 
-                var fechaStr = UIHelper.SolicitarEntrada("Ingrese la fecha (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
+                var fechaStr = UIHelper.SolicitarEntrada("Enter the date (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
                 var fecha = DateTime.Parse(fechaStr);
 
                 var venta = new Venta { 
@@ -208,49 +208,49 @@ namespace sgi_app.application.ui
                 };
                 
                 // Mostrar resumen antes de confirmar
-                UIHelper.MostrarTitulo("Resumen de la Venta");
-                Console.WriteLine($"Empleado: {ObtenerNombreEmpleado(venta.TerceroEnId)} (ID: {empleadoId})");
-                Console.WriteLine($"Cliente: {cliente.Nombre} {cliente.Apellidos}");
-                Console.WriteLine($"Factura: {venta.FactId}");
-                Console.WriteLine($"Fecha: {venta.Fecha.ToShortDateString()}");
+                UIHelper.ShowTitle("Sale Summary");
+                Console.WriteLine($"Employee: {GetEmployeeName(venta.TerceroEnId)} (ID: {empleadoId})");
+                Console.WriteLine($"Client: {cliente.Nombre} {cliente.Apellidos}");
+                Console.WriteLine($"Invoice: {venta.FactId}");
+                Console.WriteLine($"Date: {venta.Fecha.ToShortDateString()}");
                 
-                if (UIHelper.Confirmar("¿Desea guardar esta venta?"))
+                if (UIHelper.Confirmar("Do you want to save this sale?"))
                 {
                     _context.Ventas.Add(venta);
                     await _context.SaveChangesAsync();
-                    UIHelper.MostrarExito($"Venta creada exitosamente con ID: {venta.Id}");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowSuccess($"Sale created successfully with ID: {venta.Id}");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                 }
                 else
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowWarning("Operation cancelled by user.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al crear la venta", ex);
-                Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                UIHelper.ShowError("Error creating sale", ex);
+                Console.WriteLine("\nPress any key to return to the sales menu...");
                 Console.ReadKey();
             }
         }
 
-        private async Task EditarVentaAsync()
+        private async Task UpdateSaleAsync()
         {
-            UIHelper.MostrarTitulo("Editar Venta");
+            UIHelper.ShowTitle("Edit Sale");
             
             try
             {
                 // Mostrar lista de ventas disponibles
-                ListarVentas();
+                ListSales();
                 
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID de la venta a editar");
+                var idStr = UIHelper.SolicitarEntrada("Enter the ID of the sale to edit");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowWarning("Operation cancelled. The ID is required.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                     return;
                 }
@@ -261,21 +261,21 @@ namespace sgi_app.application.ui
                 if (venta != null)
                 {
                     // Mostrar información actual
-                    UIHelper.MostrarTitulo("Información Actual");
+                    UIHelper.ShowTitle("Current Information");
                     Console.WriteLine($"ID: {venta.Id}");
-                    Console.WriteLine($"Empleado: {ObtenerNombreEmpleado(venta.TerceroEnId)}");
-                    Console.WriteLine($"Cliente: {venta.TerceroCliId}");
-                    Console.WriteLine($"Factura: {venta.FactId}");
-                    Console.WriteLine($"Fecha: {venta.Fecha.ToShortDateString()}");
-                    Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
+                    Console.WriteLine($"Employee: {GetEmployeeName(venta.TerceroEnId)}");
+                    Console.WriteLine($"Client: {venta.TerceroCliId}");
+                    Console.WriteLine($"Invoice: {venta.FactId}");
+                    Console.WriteLine($"Date: {venta.Fecha.ToShortDateString()}");
+                    Console.WriteLine("\nEnter new values or leave blank to keep current:");
                     
                     // Preguntar si se desea cambiar el empleado
-                    if (UIHelper.Confirmar("¿Desea cambiar el empleado asignado a esta venta?"))
+                    if (UIHelper.Confirmar("Do you want to change the assigned employee for this sale?"))
                     {
                         // Mostrar empleados disponibles
-                        await MostrarEmpleadosDisponibles();
+                        await ShowAvailableEmployees();
                         
-                        var empleadoIdStr = UIHelper.SolicitarEntrada("Ingrese el nuevo ID del empleado");
+                        var empleadoIdStr = UIHelper.SolicitarEntrada("Enter the new ID of the employee");
                         if (!string.IsNullOrWhiteSpace(empleadoIdStr))
                         {
                             var empleadoId = int.Parse(empleadoIdStr);
@@ -284,8 +284,8 @@ namespace sgi_app.application.ui
                             var empleado = await _context.Empleados.FindAsync(empleadoId);
                             if (empleado == null)
                             {
-                                UIHelper.MostrarError($"El empleado con ID {empleadoId} no existe.");
-                                Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                                UIHelper.ShowError($"Employee with ID {empleadoId} does not exist.");
+                                Console.WriteLine("\nPress any key to return to the sales menu...");
                                 Console.ReadKey();
                                 return;
                             }
@@ -296,19 +296,19 @@ namespace sgi_app.application.ui
                     }
                     
                     // Preguntar si se desea cambiar el cliente
-                    if (UIHelper.Confirmar("¿Desea cambiar el cliente asignado a esta venta?"))
+                    if (UIHelper.Confirmar("Do you want to change the assigned client for this sale?"))
                     {
                         // Mostrar clientes disponibles
-                        await MostrarClientesDisponibles();
+                        await ShowAvailableClients();
                         
-                        var clienteId = UIHelper.SolicitarEntrada("Nuevo ID del cliente", venta.TerceroCliId);
+                        var clienteId = UIHelper.SolicitarEntrada("New ID of the client", venta.TerceroCliId);
                         
                         // Verificar que el cliente exista
                         var cliente = await _context.Terceros.FindAsync(clienteId);
                         if (cliente == null)
                         {
-                            UIHelper.MostrarError($"El cliente con ID {clienteId} no existe. Debe crear el cliente primero.");
-                            Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                            UIHelper.ShowError($"Client with ID {clienteId} does not exist. You must create the client first.");
+                            Console.WriteLine("\nPress any key to return to the sales menu...");
                             Console.ReadKey();
                             return;
                         }
@@ -316,58 +316,58 @@ namespace sgi_app.application.ui
                         venta.TerceroCliId = clienteId;
                     }
                     
-                    var factIdStr = UIHelper.SolicitarEntrada("Nuevo ID de la factura", venta.FactId.ToString());
+                    var factIdStr = UIHelper.SolicitarEntrada("New invoice ID", venta.FactId.ToString());
                     var factId = int.Parse(factIdStr);
                     
-                    var fechaStr = UIHelper.SolicitarEntrada("Nueva fecha (YYYY-MM-DD)", venta.Fecha.ToString("yyyy-MM-dd"));
+                    var fechaStr = UIHelper.SolicitarEntrada("New date (YYYY-MM-DD)", venta.Fecha.ToString("yyyy-MM-dd"));
                     
                     venta.FactId = factId;
                     venta.Fecha = DateTime.Parse(fechaStr);
 
-                    if (UIHelper.Confirmar("¿Confirma estos cambios?"))
+                    if (UIHelper.Confirmar("Are you sure you want to apply these changes?"))
                     {
                         _context.Update(venta);
                         await _context.SaveChangesAsync();
-                        UIHelper.MostrarExito("Venta actualizada exitosamente.");
-                        Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                        UIHelper.ShowSuccess("Sale updated successfully.");
+                        Console.WriteLine("\nPress any key to return to the sales menu...");
                         Console.ReadKey();
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
-                        Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
+                        Console.WriteLine("\nPress any key to return to the sales menu...");
                         Console.ReadKey();
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Venta no encontrada.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowError("Sale not found.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al actualizar la venta", ex);
-                Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                UIHelper.ShowError("Error updating sale", ex);
+                Console.WriteLine("\nPress any key to return to the sales menu...");
                 Console.ReadKey();
             }
         }
 
-        private async Task EliminarVentaAsync()
+        private async Task DeleteSaleAsync()
         {
-            UIHelper.MostrarTitulo("Eliminar Venta");
+            UIHelper.ShowTitle("Delete Sale");
             
             try
             {
                 // Mostrar lista de ventas disponibles
-                ListarVentas();
+                ListSales();
                 
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID de la venta a eliminar");
+                var idStr = UIHelper.SolicitarEntrada("Enter the ID of the sale to delete");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowWarning("Operation cancelled. The ID is required.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                     return;
                 }
@@ -381,30 +381,30 @@ namespace sgi_app.application.ui
                     var detalles = await _context.DetalleVentas.Where(d => d.VentaId == id).ToListAsync();
                     if (detalles.Any())
                     {
-                        UIHelper.MostrarAdvertencia($"La venta tiene {detalles.Count} detalles asociados. Estos serán eliminados también.");
+                        UIHelper.ShowWarning($"The sale has {detalles.Count} associated details. These will also be deleted.");
                         
                         // Mostrar los detalles que se eliminarán
                         var columnasDetalles = new Dictionary<string, Func<DetalleVenta, object>>
                         {
                             { "ID", d => d.Id },
-                            { "Producto", d => d.ProductosId },
-                            { "Cantidad", d => d.Cantidad },
-                            { "Valor Unit.", d => $"{d.Valor:C}" },
+                            { "Product", d => d.ProductosId },
+                            { "Quantity", d => d.Cantidad },
+                            { "Unit Price", d => $"{d.Valor:C}" },
                             { "Total", d => $"{(d.Cantidad * d.Valor):C}" }
                         };
-                        UIHelper.DibujarTabla(detalles, columnasDetalles, "Detalles que serán eliminados");
+                        UIHelper.DrawTable(detalles, columnasDetalles, "Details to be deleted");
                     }
                     
                     // Mostrar información de la venta a eliminar
-                    UIHelper.MostrarTitulo("Información de la Venta a Eliminar");
+                    UIHelper.ShowTitle("Sale Information to Delete");
                     Console.WriteLine($"ID: {venta.Id}");
-                    Console.WriteLine($"Empleado: {ObtenerNombreEmpleado(venta.TerceroEnId)}");
-                    Console.WriteLine($"Cliente: {venta.TerceroCliId}");
-                    Console.WriteLine($"Factura: {venta.FactId}");
-                    Console.WriteLine($"Fecha: {venta.Fecha.ToShortDateString()}");
-                    Console.WriteLine($"Total: {ObtenerTotalVenta(venta.Id)}");
+                    Console.WriteLine($"Employee: {GetEmployeeName(venta.TerceroEnId)}");
+                    Console.WriteLine($"Client: {venta.TerceroCliId}");
+                    Console.WriteLine($"Invoice: {venta.FactId}");
+                    Console.WriteLine($"Date: {venta.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Total: {GetSaleTotal(venta.Id)}");
                     
-                    if (UIHelper.Confirmar("¿Está ABSOLUTAMENTE seguro que desea eliminar esta venta y todos sus detalles?"))
+                    if (UIHelper.Confirmar("Are you ABSOLUTELY sure you want to delete this sale and all its details?"))
                     {
                         var strategy = _context.Database.CreateExecutionStrategy();
                         await strategy.ExecuteAsync(async () =>
@@ -425,50 +425,50 @@ namespace sgi_app.application.ui
                                     await _context.SaveChangesAsync(); // Guardamos los cambios de la venta
                                     
                                     await transaction.CommitAsync(); // Confirmamos la transacción
-                                    UIHelper.MostrarExito("Venta y sus detalles eliminados exitosamente.");
-                                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                                    UIHelper.ShowSuccess("Sale and its details deleted successfully.");
+                                    Console.WriteLine("\nPress any key to return to the sales menu...");
                                     Console.ReadKey();
                                 }
                                 catch (Exception ex)
                                 {
                                     await transaction.RollbackAsync();
-                                    throw new Exception("Error al eliminar la venta y sus detalles. Se han revertido los cambios.", ex);
+                                    throw new Exception("Error deleting sale and its details. Changes have been reverted.", ex);
                                 }
                             }
                         });
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
-                        Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
+                        Console.WriteLine("\nPress any key to return to the sales menu...");
                         Console.ReadKey();
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Venta no encontrada.");
-                    Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                    UIHelper.ShowError("Sale not found.");
+                    Console.WriteLine("\nPress any key to return to the sales menu...");
                     Console.ReadKey();
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al eliminar la venta", ex);
-                Console.WriteLine("\nPresione cualquier tecla para volver al menú de ventas...");
+                UIHelper.ShowError("Error deleting sale", ex);
+                Console.WriteLine("\nPress any key to return to the sales menu...");
                 Console.ReadKey();
             }
         }
         
-        // Métodos auxiliares para mostrar entidades relacionadas
+        // Helper methods for displaying related entities
         
-        private async Task MostrarEmpleadosDisponibles()
+        private async Task ShowAvailableEmployees()
         {
-            UIHelper.MostrarTitulo("Empleados Disponibles");
+            UIHelper.ShowTitle("Available Employees");
             var empleados = await _context.Empleados.ToListAsync();
             
             if (!empleados.Any())
             {
-                UIHelper.MostrarAdvertencia("No hay empleados registrados.");
+                UIHelper.ShowWarning("No employees are registered.");
                 Console.ReadKey();
                 return;
             }
@@ -485,7 +485,7 @@ namespace sgi_app.application.ui
             }
             
             Console.WriteLine("┌───────┬────────────────────────────────┬──────────────┐");
-            Console.WriteLine("│   ID  │ Nombre                         │ ID Tercero   │");
+            Console.WriteLine("│   ID  │ Name                           │ ID Tercero   │");
             Console.WriteLine("├───────┼────────────────────────────────┼──────────────┤");
             
             foreach (var emp in empleadosData)
@@ -497,14 +497,14 @@ namespace sgi_app.application.ui
             Console.WriteLine();
         }
         
-        private async Task MostrarClientesDisponibles()
+        private async Task ShowAvailableClients()
         {
-            UIHelper.MostrarTitulo("Clientes Disponibles");
+            UIHelper.ShowTitle("Available Clients");
             var clientes = await _context.Clientes.ToListAsync();
             
             if (!clientes.Any())
             {
-                UIHelper.MostrarAdvertencia("No hay clientes registrados.");
+                UIHelper.ShowWarning("No clients are registered.");
                 
                 // Mostrar todos los terceros como alternativa
                 var terceros = await _context.Terceros.ToListAsync();
@@ -512,11 +512,11 @@ namespace sgi_app.application.ui
                 var columnasTerceros = new Dictionary<string, Func<Terceros, object>>
                 {
                     { "ID", t => t.Id },
-                    { "Nombre", t => t.Nombre },
-                    { "Apellidos", t => t.Apellidos }
+                    { "Name", t => t.Nombre },
+                    { "Last Name", t => t.Apellidos }
                 };
                 
-                UIHelper.DibujarTabla(terceros, columnasTerceros, "Lista de Terceros Disponibles");
+                UIHelper.DrawTable(terceros, columnasTerceros, "List of Available Third Parties");
                 return;
             }
             
@@ -532,7 +532,7 @@ namespace sgi_app.application.ui
             }
             
             Console.WriteLine("┌───────┬────────────────────────────────┬──────────────┐");
-            Console.WriteLine("│   ID  │ Nombre                         │ ID Tercero   │");
+            Console.WriteLine("│   ID  │ Name                           │ ID Tercero   │");
             Console.WriteLine("├───────┼────────────────────────────────┼──────────────┤");
             
             foreach (var cli in clientesData)

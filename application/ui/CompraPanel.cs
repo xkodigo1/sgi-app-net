@@ -21,77 +21,77 @@ namespace sgi_app.application.ui
         {
             while (true)
             {
-                UIHelper.MostrarTitulo("Panel de Compras");
+                UIHelper.ShowTitle("Purchases Panel");
                 
-                var opciones = new Dictionary<string, string>
+                var options = new Dictionary<string, string>
                 {
-                    { "1", "Listar Compras" },
-                    { "2", "Crear Nueva Compra" },
-                    { "3", "Editar Compra" },
-                    { "4", "Eliminar Compra" }
+                    { "1", "List Purchases" },
+                    { "2", "Create New Purchase" },
+                    { "3", "Edit Purchase" },
+                    { "4", "Delete Purchase" }
                 };
                 
-                UIHelper.MostrarMenuOpciones(opciones);
+                UIHelper.ShowMenuOptions(options);
 
                 var option = Console.ReadLine();
 
                 switch (option)
                 {
                     case "1":
-                        ListarCompras();
+                        ListPurchases();
                         break;
                     case "2":
-                        CrearCompra();
+                        CreatePurchase();
                         break;
                     case "3":
-                        EditarCompra();
+                        UpdatePurchase();
                         break;
                     case "4":
-                        await EliminarCompraAsync();
+                        await DeletePurchaseAsync();
                         break;
                     case "0":
                         return;
                     default:
-                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        UIHelper.ShowWarning("Invalid option. Please try again.");
                         Console.ReadKey();
                         break;
                 }
             }
         }
 
-        private void ListarCompras()
+        private void ListPurchases()
         {
-            UIHelper.MostrarTitulo("Listado de Compras");
+            UIHelper.ShowTitle("Purchases List");
             
             try
             {
                 var compras = _context.Compras.ToList();
                 
-                // Definir las columnas y los valores a mostrar
-                var columnas = new Dictionary<string, Func<Compra, object>>
+                // Define columns and values to display
+                var columns = new Dictionary<string, Func<Compra, object>>
                 {
                     { "ID", c => c.Id },
-                    { "Proveedor", c => c.TerceroProvId },
-                    { "Empleado", c => c.TerceroEmpId },
-                    { "Documento", c => c.DocCompra },
-                    { "Fecha", c => c.Fecha.ToShortDateString() },
-                    { "Total", c => ObtenerTotalCompra(c.Id) }
+                    { "Supplier", c => c.TerceroProvId },
+                    { "Employee", c => c.TerceroEmpId },
+                    { "Document", c => c.DocCompra },
+                    { "Date", c => c.Fecha.ToShortDateString() },
+                    { "Total", c => GetPurchaseTotal(c.Id) }
                 };
                 
-                // Usar el método DibujarTabla para mostrar los datos formateados
-                UIHelper.DibujarTabla(compras, columnas, "Registro de Compras");
+                // Use DrawTable method to show formatted data
+                UIHelper.DrawTable(compras, columns, "Purchase Records");
                 
-                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al listar las compras", ex);
+                UIHelper.ShowError("Error listing purchases", ex);
             }
         }
         
-        // Método auxiliar para calcular el total de la compra
-        private string ObtenerTotalCompra(int compraId)
+        // Helper method to calculate purchase total
+        private string GetPurchaseTotal(int compraId)
         {
             try
             {
@@ -101,54 +101,54 @@ namespace sgi_app.application.ui
             }
             catch
             {
-                return "No calculado";
+                return "Not calculated";
             }
         }
 
-        private void CrearCompra()
+        private void CreatePurchase()
         {
-            UIHelper.MostrarTitulo("Crear Nueva Compra");
+            UIHelper.ShowTitle("Create New Purchase");
             
             try
             {
-                var proveedorId = UIHelper.SolicitarEntrada("Ingrese el ID del proveedor");
+                var proveedorId = UIHelper.RequestInput("Enter supplier ID");
                 if (string.IsNullOrWhiteSpace(proveedorId))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID del proveedor es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. Supplier ID is required.");
                     return;
                 }
                 
-                // Verificar que el proveedor exista
+                // Verify supplier exists
                 var proveedor = _context.Terceros.Find(proveedorId);
                 if (proveedor == null)
                 {
-                    UIHelper.MostrarError($"El tercero con ID {proveedorId} no existe. Debe crear el tercero primero.");
+                    UIHelper.ShowError($"Third party with ID {proveedorId} does not exist. You must create the third party first.");
                     return;
                 }
                 
-                var empleadoId = UIHelper.SolicitarEntrada("Ingrese el ID del empleado");
+                var empleadoId = UIHelper.RequestInput("Enter employee ID");
                 if (string.IsNullOrWhiteSpace(empleadoId))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID del empleado es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. Employee ID is required.");
                     return;
                 }
                 
-                // Verificar que el empleado exista
+                // Verify employee exists
                 var empleado = _context.Terceros.Find(empleadoId);
                 if (empleado == null)
                 {
-                    UIHelper.MostrarError($"El tercero con ID {empleadoId} no existe. Debe crear el tercero primero.");
+                    UIHelper.ShowError($"Third party with ID {empleadoId} does not exist. You must create the third party first.");
                     return;
                 }
                 
-                var docCompra = UIHelper.SolicitarEntrada("Ingrese el documento de compra");
+                var docCompra = UIHelper.RequestInput("Enter purchase document");
                 if (string.IsNullOrWhiteSpace(docCompra))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El documento de compra es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. Purchase document is required.");
                     return;
                 }
                 
-                var fechaStr = UIHelper.SolicitarEntrada("Ingrese la fecha (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
+                var fechaStr = UIHelper.RequestInput("Enter date (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
                 var fecha = DateTime.Parse(fechaStr);
 
                 var compra = new Compra { 
@@ -158,40 +158,40 @@ namespace sgi_app.application.ui
                     Fecha = fecha
                 };
                 
-                // Mostrar resumen antes de confirmar
-                UIHelper.MostrarTitulo("Resumen de la Compra");
-                Console.WriteLine($"Proveedor: {compra.TerceroProvId}");
-                Console.WriteLine($"Empleado: {compra.TerceroEmpId}");
-                Console.WriteLine($"Documento: {compra.DocCompra}");
-                Console.WriteLine($"Fecha: {compra.Fecha.ToShortDateString()}");
+                // Show summary before confirming
+                UIHelper.ShowTitle("Purchase Summary");
+                Console.WriteLine($"Supplier: {compra.TerceroProvId}");
+                Console.WriteLine($"Employee: {compra.TerceroEmpId}");
+                Console.WriteLine($"Document: {compra.DocCompra}");
+                Console.WriteLine($"Date: {compra.Fecha.ToShortDateString()}");
                 
-                if (UIHelper.Confirmar("¿Desea guardar esta compra?"))
+                if (UIHelper.Confirm("Do you want to save this purchase?"))
                 {
                     _context.Compras.Add(compra);
                     _context.SaveChanges();
-                    UIHelper.MostrarExito($"Compra creada exitosamente con ID: {compra.Id}");
+                    UIHelper.ShowSuccess($"Purchase created successfully with ID: {compra.Id}");
                 }
                 else
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                    UIHelper.ShowWarning("Operation cancelled by user.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al crear la compra", ex);
+                UIHelper.ShowError("Error creating purchase", ex);
             }
         }
 
-        private void EditarCompra()
+        private void UpdatePurchase()
         {
-            UIHelper.MostrarTitulo("Editar Compra");
+            UIHelper.ShowTitle("Edit Purchase");
             
             try
             {
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID de la compra a editar");
+                var idStr = UIHelper.RequestInput("Enter ID of the purchase to edit");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
@@ -200,78 +200,78 @@ namespace sgi_app.application.ui
 
                 if (compra != null)
                 {
-                    // Mostrar información actual
-                    UIHelper.MostrarTitulo("Información Actual");
+                    // Show current information
+                    UIHelper.ShowTitle("Current Information");
                     Console.WriteLine($"ID: {compra.Id}");
-                    Console.WriteLine($"Proveedor: {compra.TerceroProvId}");
-                    Console.WriteLine($"Empleado: {compra.TerceroEmpId}");
-                    Console.WriteLine($"Documento: {compra.DocCompra}");
-                    Console.WriteLine($"Fecha: {compra.Fecha.ToShortDateString()}");
-                    Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
+                    Console.WriteLine($"Supplier: {compra.TerceroProvId}");
+                    Console.WriteLine($"Employee: {compra.TerceroEmpId}");
+                    Console.WriteLine($"Document: {compra.DocCompra}");
+                    Console.WriteLine($"Date: {compra.Fecha.ToShortDateString()}");
+                    Console.WriteLine("\nEnter new values or leave blank to keep current:");
                     
-                    var proveedorId = UIHelper.SolicitarEntrada("Nuevo ID del proveedor", compra.TerceroProvId);
+                    var proveedorId = UIHelper.RequestInput("New supplier ID", compra.TerceroProvId);
                     
-                    // Verificar que el proveedor exista
+                    // Verify supplier exists
                     var proveedor = _context.Terceros.Find(proveedorId);
                     if (proveedor == null)
                     {
-                        UIHelper.MostrarError($"El tercero con ID {proveedorId} no existe. Debe crear el tercero primero.");
+                        UIHelper.ShowError($"Third party with ID {proveedorId} does not exist. You must create the third party first.");
                         return;
                     }
                     
-                    var empleadoId = UIHelper.SolicitarEntrada("Nuevo ID del empleado", compra.TerceroEmpId);
+                    var empleadoId = UIHelper.RequestInput("New employee ID", compra.TerceroEmpId);
                     
-                    // Verificar que el empleado exista
+                    // Verify employee exists
                     var empleado = _context.Terceros.Find(empleadoId);
                     if (empleado == null)
                     {
-                        UIHelper.MostrarError($"El tercero con ID {empleadoId} no existe. Debe crear el tercero primero.");
+                        UIHelper.ShowError($"Third party with ID {empleadoId} does not exist. You must create the third party first.");
                         return;
                     }
                     
-                    var docCompra = UIHelper.SolicitarEntrada("Nuevo documento de compra", compra.DocCompra);
-                    var fechaStr = UIHelper.SolicitarEntrada("Nueva fecha (YYYY-MM-DD)", compra.Fecha.ToString("yyyy-MM-dd"));
+                    var docCompra = UIHelper.RequestInput("New purchase document", compra.DocCompra);
+                    var fechaStr = UIHelper.RequestInput("New date (YYYY-MM-DD)", compra.Fecha.ToString("yyyy-MM-dd"));
                     
                     compra.TerceroProvId = proveedorId;
                     compra.TerceroEmpId = empleadoId;
                     compra.DocCompra = docCompra;
                     compra.Fecha = DateTime.Parse(fechaStr);
 
-                    if (UIHelper.Confirmar("¿Confirma estos cambios?"))
+                    if (UIHelper.Confirm("Confirm these changes?"))
                     {
                         _context.Update(compra);
                         _context.SaveChanges();
-                        UIHelper.MostrarExito("Compra actualizada exitosamente.");
+                        UIHelper.ShowSuccess("Purchase updated successfully.");
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Compra no encontrada.");
+                    UIHelper.ShowError("Purchase not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al actualizar la compra", ex);
+                UIHelper.ShowError("Error updating purchase", ex);
             }
         }
 
-        private async Task EliminarCompraAsync()
+        private async Task DeletePurchaseAsync()
         {
-            UIHelper.MostrarTitulo("Eliminar Compra");
+            UIHelper.ShowTitle("Delete Purchase");
             
             try
             {
-                // Mostrar lista de compras disponibles
-                ListarCompras();
+                // Show list of available purchases
+                ListPurchases();
                 
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID de la compra a eliminar");
+                var idStr = UIHelper.RequestInput("Enter ID of the purchase to delete");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
@@ -280,34 +280,34 @@ namespace sgi_app.application.ui
 
                 if (compra != null)
                 {
-                    // Verificar si existen detalles asociados
+                    // Check if there are associated details
                     var detalles = await _context.DetalleCompras.Where(d => d.CompraId == id).ToListAsync();
                     if (detalles.Any())
                     {
-                        UIHelper.MostrarAdvertencia($"La compra tiene {detalles.Count} detalles asociados. Estos serán eliminados también.");
+                        UIHelper.ShowWarning($"The purchase has {detalles.Count} associated details. These will also be deleted.");
                         
-                        // Mostrar los detalles que se eliminarán
+                        // Show the details to be deleted
                         var columnasDetalles = new Dictionary<string, Func<DetalleCompra, object>>
                         {
                             { "ID", d => d.Id },
-                            { "Producto", d => d.ProductoId },
-                            { "Cantidad", d => d.Cantidad },
-                            { "Valor Unit.", d => $"{d.Valor:C}" },
+                            { "Product", d => d.ProductoId },
+                            { "Quantity", d => d.Cantidad },
+                            { "Unit Price", d => $"{d.Valor:C}" },
                             { "Total", d => $"{(d.Cantidad * d.Valor):C}" }
                         };
-                        UIHelper.DibujarTabla(detalles, columnasDetalles, "Detalles que serán eliminados");
+                        UIHelper.DrawTable(detalles, columnasDetalles, "Details to be deleted");
                     }
                     
-                    // Mostrar información de la compra a eliminar
-                    UIHelper.MostrarTitulo("Información de la Compra a Eliminar");
+                    // Show information of the purchase to delete
+                    UIHelper.ShowTitle("Purchase Information to Delete");
                     Console.WriteLine($"ID: {compra.Id}");
-                    Console.WriteLine($"Proveedor: {compra.TerceroProvId}");
-                    Console.WriteLine($"Empleado: {compra.TerceroEmpId}");
-                    Console.WriteLine($"Documento: {compra.DocCompra}");
-                    Console.WriteLine($"Fecha: {compra.Fecha.ToShortDateString()}");
-                    Console.WriteLine($"Total: {ObtenerTotalCompra(compra.Id)}");
+                    Console.WriteLine($"Supplier: {compra.TerceroProvId}");
+                    Console.WriteLine($"Employee: {compra.TerceroEmpId}");
+                    Console.WriteLine($"Document: {compra.DocCompra}");
+                    Console.WriteLine($"Date: {compra.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Total: {GetPurchaseTotal(compra.Id)}");
                     
-                    if (UIHelper.Confirmar("¿Está ABSOLUTAMENTE seguro que desea eliminar esta compra y todos sus detalles?"))
+                    if (UIHelper.Confirm("Are you ABSOLUTELY sure you want to delete this purchase and all its details?"))
                     {
                         var strategy = _context.Database.CreateExecutionStrategy();
                         await strategy.ExecuteAsync(async () =>
@@ -316,42 +316,49 @@ namespace sgi_app.application.ui
                             {
                                 try
                                 {
-                                    // Primero eliminamos los detalles
+                                    // First delete the details
                                     if (detalles.Any())
                                     {
                                         _context.DetalleCompras.RemoveRange(detalles);
-                                        await _context.SaveChangesAsync(); // Guardamos primero los cambios de los detalles
+                                        await _context.SaveChangesAsync(); // Save changes to details first
                                     }
                                     
-                                    // Luego eliminamos la compra
+                                    // Then delete the purchase
                                     _context.Compras.Remove(compra);
-                                    await _context.SaveChangesAsync(); // Guardamos los cambios de la compra
+                                    await _context.SaveChangesAsync(); // Save purchase changes
                                     
-                                    await transaction.CommitAsync(); // Confirmamos la transacción
-                                    UIHelper.MostrarExito("Compra y sus detalles eliminados exitosamente.");
+                                    await transaction.CommitAsync(); // Confirm transaction
+                                    UIHelper.ShowSuccess("Purchase and its details deleted successfully.");
                                 }
                                 catch (Exception ex)
                                 {
                                     await transaction.RollbackAsync();
-                                    throw new Exception("Error al eliminar la compra y sus detalles. Se han revertido los cambios.", ex);
+                                    throw new Exception("Error deleting the purchase and its details. Changes have been reverted.", ex);
                                 }
                             }
                         });
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Compra no encontrada.");
+                    UIHelper.ShowError("Purchase not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al eliminar la compra", ex);
+                UIHelper.ShowError("Error deleting purchase", ex);
             }
         }
+        
+        // Maintain backward compatibility
+        private void ListarCompras() => ListPurchases();
+        private void CrearCompra() => CreatePurchase();
+        private void EditarCompra() => UpdatePurchase();
+        private Task EliminarCompraAsync() => DeletePurchaseAsync();
+        private string ObtenerTotalCompra(int compraId) => GetPurchaseTotal(compraId);
     }
 }
