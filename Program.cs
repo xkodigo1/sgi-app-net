@@ -42,7 +42,8 @@ namespace sgi_app
                     { "7", "Panel de Movimientos    - Control de movimientos en caja" },
                     { "8", "Detalles de Ventas      - Gestión de líneas de venta" },
                     { "9", "Detalles de Compras     - Gestión de líneas de compra" },
-                    { "10", "Planes Promocionales    - Gestión de promociones y descuentos" }
+                    { "10", "Planes Promocionales    - Gestión de promociones y descuentos" },
+                    { "11", "Panel de Empleados      - Gestión de empleados y nómina" }
                 };
                 
                 UIHelper.MostrarMenuOpciones(opciones);
@@ -57,7 +58,7 @@ namespace sgi_app
                         break;
                     case "2":
                         var compraPanel = new CompraPanel(context);
-                        compraPanel.ShowMenu();
+                        compraPanel.ShowMenu().Wait();
                         break;
                     case "3":
                         var productoPanel = new ProductoPanel(context);
@@ -74,7 +75,7 @@ namespace sgi_app
                         break;
                     case "6":
                         var ventaPanel = new VentaPanel(context);
-                        ventaPanel.ShowMenu();
+                        ventaPanel.ShowMenu().Wait();
                         break;
                     case "7":
                         var movimientoCajaPanel = new MovimientoCajaPanel(context);
@@ -92,6 +93,10 @@ namespace sgi_app
                         var planPromocionalPanel = new PlanPromocionalPanel(context);
                         planPromocionalPanel.ShowMenu();
                         break;
+                    case "11":
+                        var empleadoPanel = new EmpleadoPanel(context);
+                        empleadoPanel.ShowMenu().Wait();
+                        break;
                     case "0":
                         UIHelper.MostrarPantallaDespedida();
                         return;
@@ -105,34 +110,3 @@ namespace sgi_app
     }
 }
 
-namespace sgi_app.infrastructure.sql
-{
-    public class YourDbContext : DbContext
-    {
-        public DbSet<Cliente> Clientes { get; set; }
-        public DbSet<Compra> Compras { get; set; }
-        public DbSet<Empleado> Empleados { get; set; }
-        public DbSet<Producto> Productos { get; set; }
-        public DbSet<Proveedor> Proveedores { get; set; }
-        public DbSet<Terceros> Terceros { get; set; }
-        public DbSet<Venta> Ventas { get; set; }
-        public DbSet<MovCaja> MovCaja { get; set; }
-        public DbSet<DetalleVenta> DetalleVentas { get; set; }
-        public DbSet<DetalleCompra> DetalleCompras { get; set; }
-        public DbSet<TipoDocumento> TipoDocumentos { get; set; }
-        public DbSet<TipoTercero> TipoTerceros { get; set; }
-        public DbSet<Ciudad> Ciudades { get; set; }
-        public DbSet<Plan> Planes { get; set; }
-        public DbSet<PlanProducto> PlanProductos { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            // Usamos la cadena de conexión directamente
-            optionsBuilder.UseMySql(
-                "Server=localhost;Port=3306;Database=sgi-db;User=sgiapp;Password=kodigo777;SslMode=none;",
-                new MySqlServerVersion(new Version(8, 0, 21)),
-                options => options.EnableRetryOnFailure()
-            );
-        }
-    }
-}

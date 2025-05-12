@@ -171,33 +171,54 @@ namespace sgi_app.application.ui
 
         private void EditarDetalle()
         {
+            UIHelper.MostrarTitulo("Editar Detalle de Compra");
+            
             try
             {
-                Console.Write("Ingrese el ID del detalle a editar: ");
-                var id = int.Parse(Console.ReadLine());
+                // Mostrar lista de detalles disponibles
+                ListarDetalles();
+                
+                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del detalle a editar");
+                if (string.IsNullOrWhiteSpace(idStr))
+                {
+                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    return;
+                }
+                
+                var id = int.Parse(idStr);
                 var detalle = _context.DetalleCompras.Find(id);
 
                 if (detalle != null)
                 {
-                    Console.Write("Ingrese el nuevo ID del producto: ");
-                    var productoId = Console.ReadLine();
+                    // Mostrar información actual
+                    UIHelper.MostrarTitulo("Información Actual");
+                    Console.WriteLine($"ID: {detalle.Id}");
+                    Console.WriteLine($"Producto: {detalle.ProductoId}");
+                    Console.WriteLine($"Compra: {detalle.CompraId}");
+                    Console.WriteLine($"Fecha: {detalle.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Cantidad: {detalle.Cantidad}");
+                    Console.WriteLine($"Valor unitario: {detalle.Valor:C}");
+                    Console.WriteLine($"Total: {(detalle.Cantidad * detalle.Valor):C}");
+                    Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
+                    
+                    var productoId = UIHelper.SolicitarEntrada("Nuevo ID del producto", detalle.ProductoId);
                     
                     // Verificar que el producto exista
                     var producto = _context.Productos.Find(productoId);
                     if (producto == null)
                     {
-                        Console.WriteLine("Error: El producto con ID " + productoId + " no existe. Debe crear el producto primero.");
+                        UIHelper.MostrarError($"El producto con ID {productoId} no existe. Debe crear el producto primero.");
                         return;
                     }
                     
-                    Console.Write("Ingrese el nuevo ID de la compra: ");
-                    var compraId = int.Parse(Console.ReadLine());
+                    var compraIdStr = UIHelper.SolicitarEntrada("Nuevo ID de la compra", detalle.CompraId.ToString());
+                    var compraId = int.Parse(compraIdStr);
                     
                     // Verificar que la compra exista
                     var compra = _context.Compras.Find(compraId);
                     if (compra == null)
                     {
-                        Console.WriteLine("Error: La compra con ID " + compraId + " no existe. Debe crear la compra primero.");
+                        UIHelper.MostrarError($"La compra con ID {compraId} no existe. Debe crear la compra primero.");
                         return;
                     }
                     
@@ -211,40 +232,50 @@ namespace sgi_app.application.ui
                             
                         if (detalleDuplicado != null)
                         {
-                            Console.WriteLine($"Error: Ya existe un detalle para la compra {compraId} y el producto {productoId}.");
+                            UIHelper.MostrarError($"Ya existe un detalle para la compra {compraId} y el producto {productoId}.");
                             return;
                         }
                     }
                     
+                    var fechaStr = UIHelper.SolicitarEntrada("Nueva fecha (YYYY-MM-DD)", detalle.Fecha.ToString("yyyy-MM-dd"));
+                    var cantidadStr = UIHelper.SolicitarEntrada("Nueva cantidad", detalle.Cantidad.ToString());
+                    var valorStr = UIHelper.SolicitarEntrada("Nuevo valor unitario", detalle.Valor.ToString());
+                    
                     detalle.ProductoId = productoId;
                     detalle.CompraId = compraId;
-                    
-                    Console.Write("Ingrese la nueva fecha (YYYY-MM-DD): ");
-                    detalle.Fecha = DateTime.Parse(Console.ReadLine());
-                    
-                    Console.Write("Ingrese la nueva cantidad: ");
-                    detalle.Cantidad = int.Parse(Console.ReadLine());
-                    
-                    Console.Write("Ingrese el nuevo valor unitario: ");
-                    detalle.Valor = decimal.Parse(Console.ReadLine());
+                    detalle.Fecha = DateTime.Parse(fechaStr);
+                    detalle.Cantidad = int.Parse(cantidadStr);
+                    detalle.Valor = decimal.Parse(valorStr);
 
-                    _context.Update(detalle);
-                    _context.SaveChanges();
-
-                    Console.WriteLine("Detalle actualizado exitosamente.");
+                    // Mostrar resumen de cambios antes de confirmar
+                    UIHelper.MostrarTitulo("Resumen de Cambios");
+                    Console.WriteLine($"ID: {detalle.Id}");
+                    Console.WriteLine($"Producto: {detalle.ProductoId}");
+                    Console.WriteLine($"Compra: {detalle.CompraId}");
+                    Console.WriteLine($"Fecha: {detalle.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Cantidad: {detalle.Cantidad}");
+                    Console.WriteLine($"Valor unitario: {detalle.Valor:C}");
+                    Console.WriteLine($"Total: {(detalle.Cantidad * detalle.Valor):C}");
+                    
+                    if (UIHelper.Confirmar("¿Confirma estos cambios?"))
+                    {
+                        _context.Update(detalle);
+                        _context.SaveChanges();
+                        UIHelper.MostrarExito("Detalle actualizado exitosamente.");
+                    }
+                    else
+                    {
+                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Detalle no encontrado.");
+                    UIHelper.MostrarError("Detalle no encontrado.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al actualizar el detalle: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Detalle del error: {ex.InnerException.Message}");
-                }
+                UIHelper.MostrarError("Error al actualizar el detalle", ex);
             }
         }
 
