@@ -7,177 +7,177 @@ namespace sgi_app.application.ui
 {
     public static class UIHelper
     {
-        // Colores estándar para la aplicación
-        public static void MostrarTitulo(string titulo)
+        // Standard colors for the application
+        public static void ShowTitle(string title)
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
-            Console.WriteLine($"║ {titulo.PadRight(63)} ║");
+            Console.WriteLine($"║ {title.PadRight(63)} ║");
             Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝");
             Console.ResetColor();
             Console.WriteLine();
         }
 
-        public static void MostrarMenuOpciones(Dictionary<string, string> opciones, string mensajeSalida = "Salir")
+        public static void ShowMenuOptions(Dictionary<string, string> options, string exitMessage = "Exit")
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            foreach (var opcion in opciones)
+            foreach (var option in options)
             {
-                Console.WriteLine($"{opcion.Key}. {opcion.Value}");
+                Console.WriteLine($"{option.Key}. {option.Value}");
             }
-            Console.WriteLine($"0. {mensajeSalida}");
+            Console.WriteLine($"0. {exitMessage}");
             Console.ResetColor();
-            Console.Write("\nSeleccione una opción: ");
+            Console.Write("\nSelect an option: ");
         }
 
-        public static void MostrarExito(string mensaje)
+        public static void ShowSuccess(string message)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"✓ {mensaje}");
+            Console.WriteLine($"✓ {message}");
             Console.ResetColor();
-            Console.WriteLine("\nPresione cualquier tecla para continuar...");
+            Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
 
-        public static void MostrarError(string mensaje, Exception ex = null)
+        public static void ShowError(string message, Exception ex = null)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"✗ {mensaje}");
+            Console.WriteLine($"✗ {message}");
             if (ex != null)
             {
-                Console.WriteLine($"  Detalle: {ex.Message}");
+                Console.WriteLine($"  Detail: {ex.Message}");
                 if (ex.InnerException != null)
                 {
-                    Console.WriteLine($"  Error interno: {ex.InnerException.Message}");
+                    Console.WriteLine($"  Inner error: {ex.InnerException.Message}");
                 }
             }
             Console.ResetColor();
-            Console.WriteLine("\nPresione cualquier tecla para continuar...");
+            Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
 
-        public static void MostrarAdvertencia(string mensaje)
+        public static void ShowWarning(string message)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"! {mensaje}");
+            Console.WriteLine($"! {message}");
             Console.ResetColor();
         }
 
-        public static string SolicitarEntrada(string etiqueta, string valorPredeterminado = "")
+        public static string RequestInput(string label, string defaultValue = "")
         {
-            Console.Write($"{etiqueta}: ");
+            Console.Write($"{label}: ");
             Console.ForegroundColor = ConsoleColor.White;
             Console.BackgroundColor = ConsoleColor.DarkBlue;
-            string entrada = Console.ReadLine();
+            string input = Console.ReadLine();
             Console.ResetColor();
-            return string.IsNullOrWhiteSpace(entrada) ? valorPredeterminado : entrada;
+            return string.IsNullOrWhiteSpace(input) ? defaultValue : input;
         }
 
-        public static bool Confirmar(string mensaje)
+        public static bool Confirm(string message)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"{mensaje} (s/n): ");
+            Console.Write($"{message} (y/n): ");
             Console.ResetColor();
-            var respuesta = Console.ReadLine()?.ToLower();
-            return respuesta == "s";
+            var response = Console.ReadLine()?.ToLower();
+            return response == "y";
         }
 
-        // Método para dibujar tablas
-        public static void DibujarTabla<T>(IEnumerable<T> datos, Dictionary<string, Func<T, object>> columnas, 
-                                        string titulo = "Resultados")
+        // Method to draw tables
+        public static void DrawTable<T>(IEnumerable<T> data, Dictionary<string, Func<T, object>> columns, 
+                                        string title = "Results")
         {
-            if (datos == null || !datos.Any())
+            if (data == null || !data.Any())
             {
-                MostrarAdvertencia("No hay datos para mostrar.");
+                ShowWarning("No data to display.");
                 return;
             }
 
-            // Determinar el ancho de cada columna
-            var anchos = new Dictionary<string, int>();
-            foreach (var col in columnas)
+            // Determine the width of each column
+            var widths = new Dictionary<string, int>();
+            foreach (var col in columns)
             {
-                // Inicializar con el largo del encabezado
-                anchos[col.Key] = col.Key.Length;
+                // Initialize with header length
+                widths[col.Key] = col.Key.Length;
                 
-                // Encontrar el valor máximo considerando todos los datos
-                foreach (var item in datos)
+                // Find the maximum value considering all data
+                foreach (var item in data)
                 {
-                    var valor = col.Value(item)?.ToString() ?? "NULL";
-                    anchos[col.Key] = Math.Max(anchos[col.Key], valor.Length);
+                    var value = col.Value(item)?.ToString() ?? "NULL";
+                    widths[col.Key] = Math.Max(widths[col.Key], value.Length);
                 }
                 
-                // Añadir un poco de padding
-                anchos[col.Key] += 2;
+                // Add some padding
+                widths[col.Key] += 2;
             }
 
-            // Calcular ancho total de la tabla
-            int anchoTotal = columnas.Sum(c => anchos[c.Key]) + columnas.Count + 1;
+            // Calculate total table width
+            int totalWidth = columns.Sum(c => widths[c.Key]) + columns.Count + 1;
 
-            // Dibujar encabezado de la tabla
+            // Draw table header
             Console.ForegroundColor = ConsoleColor.Cyan;
             
-            // Línea superior
+            // Top line
             Console.Write("╔");
-            foreach (var col in columnas)
+            foreach (var col in columns)
             {
-                Console.Write(new string('═', anchos[col.Key]));
-                if (col.Key != columnas.Keys.Last())
+                Console.Write(new string('═', widths[col.Key]));
+                if (col.Key != columns.Keys.Last())
                     Console.Write("╦");
             }
             Console.WriteLine("╗");
             
-            // Encabezados de columna
+            // Column headers
             Console.Write("║");
-            foreach (var col in columnas)
+            foreach (var col in columns)
             {
-                Console.Write($" {col.Key.PadRight(anchos[col.Key] - 2)} ");
-                if (col.Key != columnas.Keys.Last())
+                Console.Write($" {col.Key.PadRight(widths[col.Key] - 2)} ");
+                if (col.Key != columns.Keys.Last())
                     Console.Write("║");
             }
             Console.WriteLine("║");
             
-            // Línea separadora
+            // Separator line
             Console.Write("╠");
-            foreach (var col in columnas)
+            foreach (var col in columns)
             {
-                Console.Write(new string('═', anchos[col.Key]));
-                if (col.Key != columnas.Keys.Last())
+                Console.Write(new string('═', widths[col.Key]));
+                if (col.Key != columns.Keys.Last())
                     Console.Write("╬");
             }
             Console.WriteLine("╣");
             Console.ResetColor();
 
-            // Filas de datos
-            foreach (var item in datos)
+            // Data rows
+            foreach (var item in data)
             {
                 Console.Write("║");
-                foreach (var col in columnas)
+                foreach (var col in columns)
                 {
-                    var valor = col.Value(item)?.ToString() ?? "NULL";
-                    Console.Write($" {valor.PadRight(anchos[col.Key] - 2)} ");
-                    if (col.Key != columnas.Keys.Last())
+                    var value = col.Value(item)?.ToString() ?? "NULL";
+                    Console.Write($" {value.PadRight(widths[col.Key] - 2)} ");
+                    if (col.Key != columns.Keys.Last())
                         Console.Write("║");
                 }
                 Console.WriteLine("║");
             }
 
-            // Línea inferior
+            // Bottom line
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Write("╚");
-            foreach (var col in columnas)
+            foreach (var col in columns)
             {
-                Console.Write(new string('═', anchos[col.Key]));
-                if (col.Key != columnas.Keys.Last())
+                Console.Write(new string('═', widths[col.Key]));
+                if (col.Key != columns.Keys.Last())
                     Console.Write("╩");
             }
             Console.WriteLine("╝");
             Console.ResetColor();
             
-            Console.WriteLine($"Total: {datos.Count()} registros");
+            Console.WriteLine($"Total: {data.Count()} records");
         }
 
-        public static void MostrarPantallaBienvenida()
+        public static void ShowWelcomeScreen()
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -191,30 +191,45 @@ namespace sgi_app.application.ui
 ║   ███████║╚██████╔╝███████╗██║  ██║██║     ██║                          ║
 ║   ╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝                          ║
 ║                                                                          ║
-║            Sistema de Gestión Integral - Administración                  ║
-║                         Versión 1.0.0                                    ║
+║            Integrated Management System - Administration                 ║
+║                         Version 1.0.0                                    ║
 ║                                                                          ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 ");
             Console.ResetColor();
-            Console.WriteLine("\nPresione cualquier tecla para continuar...");
+            Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
         
-        public static void MostrarPantallaDespedida()
+        public static void ShowGoodbyeScreen()
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine(@"
 ╔══════════════════════════════════════════════════════════════════════════╗
 ║                                                                          ║
-║         Gracias por utilizar el Sistema de Gestión Integral              ║
+║         Thank you for using the Integrated Management System             ║
 ║                                                                          ║
-║                    ¡Hasta pronto!                                        ║
+║                    See you soon!                                         ║
 ║                                                                          ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 ");
             Console.ResetColor();
         }
+
+        // Maintain backward compatibility with old method names
+        public static void MostrarTitulo(string titulo) => ShowTitle(titulo);
+        public static void MostrarMenuOpciones(Dictionary<string, string> opciones, string mensajeSalida = "Salir") 
+            => ShowMenuOptions(opciones, mensajeSalida);
+        public static void MostrarExito(string mensaje) => ShowSuccess(mensaje);
+        public static void MostrarError(string mensaje, Exception ex = null) => ShowError(mensaje, ex);
+        public static void MostrarAdvertencia(string mensaje) => ShowWarning(mensaje);
+        public static string SolicitarEntrada(string etiqueta, string valorPredeterminado = "") 
+            => RequestInput(etiqueta, valorPredeterminado);
+        public static bool Confirmar(string mensaje) => Confirm(mensaje);
+        public static void DibujarTabla<T>(IEnumerable<T> datos, Dictionary<string, Func<T, object>> columnas, string titulo = "Resultados")
+            => DrawTable(datos, columnas, titulo);
+        public static void MostrarPantallaBienvenida() => ShowWelcomeScreen();
+        public static void MostrarPantallaDespedida() => ShowGoodbyeScreen();
     }
 } 

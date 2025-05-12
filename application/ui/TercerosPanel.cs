@@ -20,83 +20,83 @@ namespace sgi_app.application.ui
         {
             while (true)
             {
-                UIHelper.MostrarTitulo("Panel de Terceros");
+                UIHelper.ShowTitle("Third Parties Panel");
                 
-                var opciones = new Dictionary<string, string>
+                var options = new Dictionary<string, string>
                 {
-                    { "1", "Listar Terceros" },
-                    { "2", "Crear Nuevo Tercero" },
-                    { "3", "Editar Tercero" },
-                    { "4", "Eliminar Tercero" }
+                    { "1", "List Third Parties" },
+                    { "2", "Create New Third Party" },
+                    { "3", "Edit Third Party" },
+                    { "4", "Delete Third Party" }
                 };
                 
-                UIHelper.MostrarMenuOpciones(opciones);
+                UIHelper.ShowMenuOptions(options);
 
                 var option = Console.ReadLine();
 
                 switch (option)
                 {
                     case "1":
-                        ListarTerceros();
+                        ListThirdParties();
                         break;
                     case "2":
-                        CrearTercero();
+                        CreateThirdParty();
                         break;
                     case "3":
-                        EditarTercero();
+                        UpdateThirdParty();
                         break;
                     case "4":
-                        EliminarTercero();
+                        DeleteThirdParty();
                         break;
                     case "0":
                         return;
                     default:
-                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        UIHelper.ShowWarning("Invalid option. Please try again.");
                         Console.ReadKey();
                         break;
                 }
             }
         }
 
-        private void ListarTerceros()
+        private void ListThirdParties()
         {
-            UIHelper.MostrarTitulo("Listado de Terceros");
+            UIHelper.ShowTitle("Third Parties List");
             
             try
             {
                 var terceros = _context.Terceros.ToList();
                 
-                // Definir las columnas y los valores a mostrar
-                var columnas = new Dictionary<string, Func<Terceros, object>>
+                // Define columns and values to display
+                var columns = new Dictionary<string, Func<Terceros, object>>
                 {
                     { "ID", t => t.Id },
-                    { "Nombre", t => t.Nombre },
-                    { "Apellidos", t => t.Apellidos },
-                    { "Email", t => t.Email ?? "No registrado" },
-                    { "Tipo Doc.", t => ObtenerNombreTipoDocumento(t.TipoDocId) },
-                    { "Tipo Tercero", t => ObtenerNombreTipoTercero(t.TipoTerceroId) },
-                    { "Ciudad", t => ObtenerNombreCiudad(t.CiudadId) }
+                    { "First Name", t => t.Nombre },
+                    { "Last Name", t => t.Apellidos },
+                    { "Email", t => t.Email ?? "Not registered" },
+                    { "Doc. Type", t => GetDocumentTypeName(t.TipoDocId) },
+                    { "Party Type", t => GetThirdPartyTypeName(t.TipoTerceroId) },
+                    { "City", t => GetCityName(t.CiudadId) }
                 };
                 
-                // Usar el método DibujarTabla para mostrar los datos formateados
-                UIHelper.DibujarTabla(terceros, columnas, "Registro de Terceros");
+                // Use DrawTable method to show formatted data
+                UIHelper.DrawTable(terceros, columns, "Third Parties Registry");
                 
-                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al listar los terceros", ex);
+                UIHelper.ShowError("Error listing third parties", ex);
             }
         }
         
-        // Métodos auxiliares para obtener nombres de referencias
-        private string ObtenerNombreTipoDocumento(int tipoDocId)
+        // Helper methods to get reference names
+        private string GetDocumentTypeName(int tipoDocId)
         {
             try
             {
                 var tipoDoc = _context.TipoDocumentos.Find(tipoDocId);
-                return tipoDoc?.Descripcion ?? "Desconocido";
+                return tipoDoc?.Descripcion ?? "Unknown";
             }
             catch
             {
@@ -104,12 +104,12 @@ namespace sgi_app.application.ui
             }
         }
         
-        private string ObtenerNombreTipoTercero(int tipoTerceroId)
+        private string GetThirdPartyTypeName(int tipoTerceroId)
         {
             try
             {
                 var tipoTercero = _context.TipoTerceros.Find(tipoTerceroId);
-                return tipoTercero?.Descripcion ?? "Desconocido";
+                return tipoTercero?.Descripcion ?? "Unknown";
             }
             catch
             {
@@ -117,12 +117,12 @@ namespace sgi_app.application.ui
             }
         }
         
-        private string ObtenerNombreCiudad(int ciudadId)
+        private string GetCityName(int ciudadId)
         {
             try
             {
                 var ciudad = _context.Ciudades.Find(ciudadId);
-                return ciudad?.Nombre ?? "Desconocida";
+                return ciudad?.Nombre ?? "Unknown";
             }
             catch
             {
@@ -130,147 +130,150 @@ namespace sgi_app.application.ui
             }
         }
 
-        private void CrearTercero()
+        private void CreateThirdParty()
         {
-            UIHelper.MostrarTitulo("Crear Nuevo Tercero");
+            UIHelper.ShowTitle("Create New Third Party");
             
             try
             {
-                var id = UIHelper.SolicitarEntrada("Ingrese el ID del tercero");
+                var id = UIHelper.RequestInput("Enter third party ID");
                 if (string.IsNullOrWhiteSpace(id))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
-                // Verificar que no exista ya un tercero con este ID
+                // Verify that a third party with this ID doesn't already exist
                 var terceroExistente = _context.Terceros.Find(id);
                 if (terceroExistente != null)
                 {
-                    UIHelper.MostrarError($"Ya existe un tercero con el ID {id}.");
+                    UIHelper.ShowError($"A third party with ID {id} already exists.");
                     return;
                 }
                 
-                var nombre = UIHelper.SolicitarEntrada("Ingrese el nombre");
+                var nombre = UIHelper.RequestInput("Enter first name");
                 if (string.IsNullOrWhiteSpace(nombre))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El nombre es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. First name is required.");
                     return;
                 }
                 
-                var apellidos = UIHelper.SolicitarEntrada("Ingrese los apellidos");
+                var apellidos = UIHelper.RequestInput("Enter last name");
                 if (string.IsNullOrWhiteSpace(apellidos))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. Los apellidos son obligatorios.");
+                    UIHelper.ShowWarning("Operation cancelled. Last name is required.");
                     return;
                 }
                 
-                var email = UIHelper.SolicitarEntrada("Ingrese el email (opcional)");
+                var email = UIHelper.RequestInput("Enter email (optional)");
                 
-                // Listar los tipos de documento disponibles
-                UIHelper.MostrarTitulo("Tipos de Documento Disponibles");
+                // List available document types
+                UIHelper.ShowTitle("Available Document Types");
                 var tiposDoc = _context.TipoDocumentos.ToList();
                 foreach (var tipo in tiposDoc)
                 {
                     Console.WriteLine($"{tipo.Id} - {tipo.Descripcion}");
                 }
                 
-                var tipoDocIdStr = UIHelper.SolicitarEntrada("Ingrese el ID del tipo de documento");
+                var tipoDocIdStr = UIHelper.RequestInput("Enter document type ID");
                 var tipoDocId = int.Parse(tipoDocIdStr);
                 
-                // Verificar que el tipo de documento exista
+                // Verify document type exists
                 var tipoDoc = _context.TipoDocumentos.Find(tipoDocId);
                 if (tipoDoc == null)
                 {
-                    UIHelper.MostrarError($"El tipo de documento con ID {tipoDocId} no existe.");
+                    UIHelper.ShowError($"Document type with ID {tipoDocId} does not exist.");
                     return;
                 }
                 
-                // Listar los tipos de tercero disponibles
-                UIHelper.MostrarTitulo("Tipos de Tercero Disponibles");
+                // List available third party types
+                UIHelper.ShowTitle("Available Third Party Types");
                 var tiposTercero = _context.TipoTerceros.ToList();
                 foreach (var tipo in tiposTercero)
                 {
                     Console.WriteLine($"{tipo.Id} - {tipo.Descripcion}");
                 }
                 
-                var tipoTerceroIdStr = UIHelper.SolicitarEntrada("Ingrese el ID del tipo de tercero");
+                var tipoTerceroIdStr = UIHelper.RequestInput("Enter third party type ID");
                 var tipoTerceroId = int.Parse(tipoTerceroIdStr);
                 
-                // Verificar que el tipo de tercero exista
+                // Verify third party type exists
                 var tipoTercero = _context.TipoTerceros.Find(tipoTerceroId);
                 if (tipoTercero == null)
                 {
-                    UIHelper.MostrarError($"El tipo de tercero con ID {tipoTerceroId} no existe.");
+                    UIHelper.ShowError($"Third party type with ID {tipoTerceroId} does not exist.");
                     return;
                 }
                 
-                // Listar las ciudades disponibles
-                UIHelper.MostrarTitulo("Ciudades Disponibles");
+                // List available cities
+                UIHelper.ShowTitle("Available Cities");
                 var ciudades = _context.Ciudades.ToList();
-                foreach (var c in ciudades)
+                foreach (var ciudadItem in ciudades)
                 {
-                    Console.WriteLine($"{c.Id} - {c.Nombre}");
+                    Console.WriteLine($"{ciudadItem.Id} - {ciudadItem.Nombre}");
                 }
                 
-                var ciudadIdStr = UIHelper.SolicitarEntrada("Ingrese el ID de la ciudad");
+                var ciudadIdStr = UIHelper.RequestInput("Enter city ID");
                 var ciudadId = int.Parse(ciudadIdStr);
                 
-                // Verificar que la ciudad exista
-                var ciudadSeleccionada = _context.Ciudades.Find(ciudadId);
-                if (ciudadSeleccionada == null)
+                // Verify city exists
+                var ciudad = _context.Ciudades.Find(ciudadId);
+                if (ciudad == null)
                 {
-                    UIHelper.MostrarError($"La ciudad con ID {ciudadId} no existe.");
+                    UIHelper.ShowError($"City with ID {ciudadId} does not exist.");
                     return;
                 }
+                
+                var telefono = UIHelper.RequestInput("Enter phone number");
+                var direccion = UIHelper.RequestInput("Enter address");
 
-                var tercero = new Terceros { 
+                var tercero = new Terceros 
+                { 
                     Id = id, 
                     Nombre = nombre, 
                     Apellidos = apellidos, 
-                    Email = string.IsNullOrWhiteSpace(email) ? null : email,
+                    Email = email,
                     TipoDocId = tipoDocId,
                     TipoTerceroId = tipoTerceroId,
-                    CiudadId = ciudadId
+                    CiudadId = ciudadId,
                 };
                 
-                // Mostrar resumen antes de confirmar
-                UIHelper.MostrarTitulo("Resumen del Tercero");
+                // Show summary before confirming
+                UIHelper.ShowTitle("Third Party Summary");
                 Console.WriteLine($"ID: {tercero.Id}");
-                Console.WriteLine($"Nombre: {tercero.Nombre}");
-                Console.WriteLine($"Apellidos: {tercero.Apellidos}");
-                Console.WriteLine($"Email: {tercero.Email ?? "No registrado"}");
-                Console.WriteLine($"Tipo Doc.: {ObtenerNombreTipoDocumento(tercero.TipoDocId)}");
-                Console.WriteLine($"Tipo Tercero: {ObtenerNombreTipoTercero(tercero.TipoTerceroId)}");
-                Console.WriteLine($"Ciudad: {ObtenerNombreCiudad(tercero.CiudadId)}");
+                Console.WriteLine($"Name: {tercero.Nombre} {tercero.Apellidos}");
+                Console.WriteLine($"Email: {tercero.Email ?? "Not provided"}");
+                Console.WriteLine($"Document Type: {GetDocumentTypeName(tercero.TipoDocId)}");
+                Console.WriteLine($"Third Party Type: {GetThirdPartyTypeName(tercero.TipoTerceroId)}");
+                Console.WriteLine($"City: {GetCityName(tercero.CiudadId)}");
                 
-                if (UIHelper.Confirmar("¿Desea guardar este tercero?"))
+                if (UIHelper.Confirm("Do you want to save this third party?"))
                 {
                     _context.Terceros.Add(tercero);
                     _context.SaveChanges();
-                    UIHelper.MostrarExito("Tercero creado exitosamente.");
+                    UIHelper.ShowSuccess("Third party created successfully.");
                 }
                 else
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                    UIHelper.ShowWarning("Operation cancelled by user.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al crear el tercero", ex);
+                UIHelper.ShowError("Error creating third party", ex);
             }
         }
 
-        private void EditarTercero()
+        private void UpdateThirdParty()
         {
-            UIHelper.MostrarTitulo("Editar Tercero");
+            UIHelper.ShowTitle("Edit Third Party");
             
             try
             {
-                var id = UIHelper.SolicitarEntrada("Ingrese el ID del tercero a editar");
+                var id = UIHelper.RequestInput("Enter ID of the third party to edit");
                 if (string.IsNullOrWhiteSpace(id))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
@@ -278,77 +281,78 @@ namespace sgi_app.application.ui
 
                 if (tercero != null)
                 {
-                    // Mostrar información actual
-                    UIHelper.MostrarTitulo("Información Actual");
+                    // Show current information
+                    UIHelper.ShowTitle("Current Information");
                     Console.WriteLine($"ID: {tercero.Id}");
-                    Console.WriteLine($"Nombre: {tercero.Nombre}");
-                    Console.WriteLine($"Apellidos: {tercero.Apellidos}");
-                    Console.WriteLine($"Email: {tercero.Email ?? "No registrado"}");
-                    Console.WriteLine($"Tipo Doc.: {ObtenerNombreTipoDocumento(tercero.TipoDocId)}");
-                    Console.WriteLine($"Tipo Tercero: {ObtenerNombreTipoTercero(tercero.TipoTerceroId)}");
-                    Console.WriteLine($"Ciudad: {ObtenerNombreCiudad(tercero.CiudadId)}");
-                    Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
+                    Console.WriteLine($"First Name: {tercero.Nombre}");
+                    Console.WriteLine($"Last Name: {tercero.Apellidos}");
+                    Console.WriteLine($"Email: {tercero.Email ?? "Not provided"}");
+                    Console.WriteLine($"Document Type: {GetDocumentTypeName(tercero.TipoDocId)}");
+                    Console.WriteLine($"Third Party Type: {GetThirdPartyTypeName(tercero.TipoTerceroId)}");
+                    Console.WriteLine($"City: {GetCityName(tercero.CiudadId)}");
+                    Console.WriteLine("\nEnter new values or leave blank to keep current:");
                     
-                    var nombre = UIHelper.SolicitarEntrada("Nuevo nombre", tercero.Nombre);
-                    var apellidos = UIHelper.SolicitarEntrada("Nuevos apellidos", tercero.Apellidos);
-                    var email = UIHelper.SolicitarEntrada("Nuevo email", tercero.Email ?? "");
+                    var nombre = UIHelper.RequestInput("New first name", tercero.Nombre);
+                    var apellidos = UIHelper.RequestInput("New last name", tercero.Apellidos);
+                    var email = UIHelper.RequestInput("New email", tercero.Email ?? "");
                     
-                    // Listar los tipos de documento disponibles
-                    UIHelper.MostrarTitulo("Tipos de Documento Disponibles");
+                    // List available document types
+                    UIHelper.ShowTitle("Available Document Types");
                     var tiposDoc = _context.TipoDocumentos.ToList();
                     foreach (var tipo in tiposDoc)
                     {
                         Console.WriteLine($"{tipo.Id} - {tipo.Descripcion}");
                     }
                     
-                    var tipoDocIdStr = UIHelper.SolicitarEntrada("Nuevo ID del tipo de documento", tercero.TipoDocId.ToString());
+                    var tipoDocIdStr = UIHelper.RequestInput("New document type ID", tercero.TipoDocId.ToString());
                     var tipoDocId = int.Parse(tipoDocIdStr);
                     
-                    // Verificar que el tipo de documento exista
+                    // Verify document type exists
                     var tipoDoc = _context.TipoDocumentos.Find(tipoDocId);
                     if (tipoDoc == null)
                     {
-                        UIHelper.MostrarError($"El tipo de documento con ID {tipoDocId} no existe.");
+                        UIHelper.ShowError($"Document type with ID {tipoDocId} does not exist.");
                         return;
                     }
                     
-                    // Listar los tipos de tercero disponibles
-                    UIHelper.MostrarTitulo("Tipos de Tercero Disponibles");
+                    // List available third party types
+                    UIHelper.ShowTitle("Available Third Party Types");
                     var tiposTercero = _context.TipoTerceros.ToList();
                     foreach (var tipo in tiposTercero)
                     {
                         Console.WriteLine($"{tipo.Id} - {tipo.Descripcion}");
                     }
                     
-                    var tipoTerceroIdStr = UIHelper.SolicitarEntrada("Nuevo ID del tipo de tercero", tercero.TipoTerceroId.ToString());
+                    var tipoTerceroIdStr = UIHelper.RequestInput("New third party type ID", tercero.TipoTerceroId.ToString());
                     var tipoTerceroId = int.Parse(tipoTerceroIdStr);
                     
-                    // Verificar que el tipo de tercero exista
+                    // Verify third party type exists
                     var tipoTercero = _context.TipoTerceros.Find(tipoTerceroId);
                     if (tipoTercero == null)
                     {
-                        UIHelper.MostrarError($"El tipo de tercero con ID {tipoTerceroId} no existe.");
+                        UIHelper.ShowError($"Third party type with ID {tipoTerceroId} does not exist.");
                         return;
                     }
                     
-                    // Listar las ciudades disponibles
-                    UIHelper.MostrarTitulo("Ciudades Disponibles");
+                    // List available cities
+                    UIHelper.ShowTitle("Available Cities");
                     var ciudades = _context.Ciudades.ToList();
-                    foreach (var c in ciudades)
+                    foreach (var ciudadItem in ciudades)
                     {
-                        Console.WriteLine($"{c.Id} - {c.Nombre}");
+                        Console.WriteLine($"{ciudadItem.Id} - {ciudadItem.Nombre}");
                     }
                     
-                    var ciudadIdStr = UIHelper.SolicitarEntrada("Nuevo ID de la ciudad", tercero.CiudadId.ToString());
+                    var ciudadIdStr = UIHelper.RequestInput("New city ID", tercero.CiudadId.ToString());
                     var ciudadId = int.Parse(ciudadIdStr);
                     
-                    // Verificar que la ciudad exista
-                    var ciudadSeleccionada = _context.Ciudades.Find(ciudadId);
-                    if (ciudadSeleccionada == null)
+                    // Verify city exists
+                    var ciudad = _context.Ciudades.Find(ciudadId);
+                    if (ciudad == null)
                     {
-                        UIHelper.MostrarError($"La ciudad con ID {ciudadId} no existe.");
+                        UIHelper.ShowError($"City with ID {ciudadId} does not exist.");
                         return;
                     }
+                    
                     
                     tercero.Nombre = nombre;
                     tercero.Apellidos = apellidos;
@@ -357,38 +361,39 @@ namespace sgi_app.application.ui
                     tercero.TipoTerceroId = tipoTerceroId;
                     tercero.CiudadId = ciudadId;
 
-                    if (UIHelper.Confirmar("¿Confirma estos cambios?"))
+
+                    if (UIHelper.Confirm("Do you confirm these changes?"))
                     {
                         _context.Update(tercero);
                         _context.SaveChanges();
-                        UIHelper.MostrarExito("Tercero actualizado exitosamente.");
+                        UIHelper.ShowSuccess("Third party updated successfully.");
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Tercero no encontrado.");
+                    UIHelper.ShowError("Third party not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al actualizar el tercero", ex);
+                UIHelper.ShowError("Error updating third party", ex);
             }
         }
 
-        private void EliminarTercero()
+        private void DeleteThirdParty()
         {
-            UIHelper.MostrarTitulo("Eliminar Tercero");
+            UIHelper.ShowTitle("Delete Third Party");
             
             try
             {
-                var id = UIHelper.SolicitarEntrada("Ingrese el ID del tercero a eliminar");
+                var id = UIHelper.RequestInput("Enter ID of the third party to delete");
                 if (string.IsNullOrWhiteSpace(id))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
@@ -396,83 +401,64 @@ namespace sgi_app.application.ui
 
                 if (tercero != null)
                 {
-                    // Verificar si existen entidades relacionadas
-                    bool tieneRelaciones = false;
+                    // Check if there are any related records
+                    var clientes = _context.Clientes.Where(c => c.TerceroId == id).ToList();
+                    var empleados = _context.Empleados.Where(e => e.TerceroId == id).ToList();
+                    var ventasComoCliente = _context.Ventas.Where(v => v.TerceroCliId == id).ToList();
+                    var ventasComoEmpleado = _context.Ventas.Where(v => v.TerceroEnId == id).ToList();
+                    var comprasComoProveedor = _context.Compras.Where(c => c.TerceroProvId == id).ToList();
+                    var comprasComoEmpleado = _context.Compras.Where(c => c.TerceroEmpId == id).ToList();
                     
-                    // Verificar clientes
-                    var cliente = _context.Clientes.FirstOrDefault(c => c.TerceroId == id);
-                    if (cliente != null)
+                    if (clientes.Any() || empleados.Any() || ventasComoCliente.Any() ||
+                        ventasComoEmpleado.Any() || comprasComoProveedor.Any() || comprasComoEmpleado.Any())
                     {
-                        UIHelper.MostrarAdvertencia($"Este tercero está asociado a un cliente (ID: {cliente.Id}).");
-                        tieneRelaciones = true;
+                        UIHelper.ShowWarning("This third party has associated records and cannot be deleted.");
+                        UIHelper.ShowWarning($"Associated records: {clientes.Count} clients, {empleados.Count} employees, {ventasComoCliente.Count} sales as client, " +
+                                             $"{ventasComoEmpleado.Count} sales as employee, {comprasComoProveedor.Count} purchases as supplier, " +
+                                             $"{comprasComoEmpleado.Count} purchases as employee.");
+                        Console.WriteLine("\nPress any key to continue...");
+                        Console.ReadKey();
+                        return;
                     }
                     
-                    // Verificar ventas
-                    var ventasVendedor = _context.Ventas.Where(v => v.TerceroEnId == id).ToList();
-                    if (ventasVendedor.Any())
-                    {
-                        UIHelper.MostrarAdvertencia($"Este tercero está asociado a {ventasVendedor.Count} ventas como vendedor.");
-                        tieneRelaciones = true;
-                    }
-                    
-                    var ventasCliente = _context.Ventas.Where(v => v.TerceroCliId == id).ToList();
-                    if (ventasCliente.Any())
-                    {
-                        UIHelper.MostrarAdvertencia($"Este tercero está asociado a {ventasCliente.Count} ventas como cliente.");
-                        tieneRelaciones = true;
-                    }
-                    
-                    // Verificar compras
-                    var comprasProveedor = _context.Compras.Where(c => c.TerceroProvId == id).ToList();
-                    if (comprasProveedor.Any())
-                    {
-                        UIHelper.MostrarAdvertencia($"Este tercero está asociado a {comprasProveedor.Count} compras como proveedor.");
-                        tieneRelaciones = true;
-                    }
-                    
-                    var comprasEmpleado = _context.Compras.Where(c => c.TerceroEmpId == id).ToList();
-                    if (comprasEmpleado.Any())
-                    {
-                        UIHelper.MostrarAdvertencia($"Este tercero está asociado a {comprasEmpleado.Count} compras como empleado.");
-                        tieneRelaciones = true;
-                    }
-                    
-                    if (tieneRelaciones)
-                    {
-                        if (!UIHelper.Confirmar("⚠️ ADVERTENCIA: Eliminar este tercero afectará múltiples registros en el sistema. ¿Está ABSOLUTAMENTE seguro de continuar?"))
-                        {
-                            UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
-                            return;
-                        }
-                    }
-                    
-                    // Mostrar información a eliminar
-                    UIHelper.MostrarTitulo("Información del Tercero a Eliminar");
+                    // Show information of the third party to delete
+                    UIHelper.ShowTitle("Third Party Information to Delete");
                     Console.WriteLine($"ID: {tercero.Id}");
-                    Console.WriteLine($"Nombre: {tercero.Nombre}");
-                    Console.WriteLine($"Apellidos: {tercero.Apellidos}");
-                    Console.WriteLine($"Email: {tercero.Email ?? "No registrado"}");
+                    Console.WriteLine($"Name: {tercero.Nombre} {tercero.Apellidos}");
+                    Console.WriteLine($"Email: {tercero.Email ?? "Not provided"}");
+                    Console.WriteLine($"Document Type: {GetDocumentTypeName(tercero.TipoDocId)}");
+                    Console.WriteLine($"Third Party Type: {GetThirdPartyTypeName(tercero.TipoTerceroId)}");
+                    Console.WriteLine($"City: {GetCityName(tercero.CiudadId)}");
                     
-                    if (UIHelper.Confirmar("¿Está seguro que desea eliminar este tercero?"))
+                    if (UIHelper.Confirm("Are you ABSOLUTELY sure you want to delete this third party?"))
                     {
                         _context.Terceros.Remove(tercero);
                         _context.SaveChanges();
-                        UIHelper.MostrarExito("Tercero eliminado exitosamente.");
+                        UIHelper.ShowSuccess("Third party deleted successfully.");
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Tercero no encontrado.");
+                    UIHelper.ShowError("Third party not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al eliminar el tercero", ex);
+                UIHelper.ShowError("Error deleting third party", ex);
             }
         }
+        
+        // Maintain backward compatibility
+        private void ListarTerceros() => ListThirdParties();
+        private void CrearTercero() => CreateThirdParty();
+        private void EditarTercero() => UpdateThirdParty();
+        private void EliminarTercero() => DeleteThirdParty();
+        private string ObtenerNombreTipoDocumento(int tipoDocId) => GetDocumentTypeName(tipoDocId);
+        private string ObtenerNombreTipoTercero(int tipoTerceroId) => GetThirdPartyTypeName(tipoTerceroId);
+        private string ObtenerNombreCiudad(int ciudadId) => GetCityName(ciudadId);
     }
 }

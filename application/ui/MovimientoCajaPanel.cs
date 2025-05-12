@@ -20,47 +20,47 @@ namespace sgi_app.application.ui
         {
             while (true)
             {
-                UIHelper.MostrarTitulo("Panel de Movimiento de Caja");
+                UIHelper.ShowTitle("Cash Flow Panel");
                 
-                var opciones = new Dictionary<string, string>
+                var options = new Dictionary<string, string>
                 {
-                    { "1", "Listar Movimientos" },
-                    { "2", "Crear Nuevo Movimiento" },
-                    { "3", "Editar Movimiento" },
-                    { "4", "Eliminar Movimiento" }
+                    { "1", "List Transactions" },
+                    { "2", "Create New Transaction" },
+                    { "3", "Edit Transaction" },
+                    { "4", "Delete Transaction" }
                 };
                 
-                UIHelper.MostrarMenuOpciones(opciones);
+                UIHelper.ShowMenuOptions(options);
 
                 var option = Console.ReadLine();
 
                 switch (option)
                 {
                     case "1":
-                        ListarMovimientos();
+                        ListTransactions();
                         break;
                     case "2":
-                        CrearMovimiento();
+                        CreateTransaction();
                         break;
                     case "3":
-                        EditarMovimiento();
+                        UpdateTransaction();
                         break;
                     case "4":
-                        EliminarMovimiento();
+                        DeleteTransaction();
                         break;
                     case "0":
                         return;
                     default:
-                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        UIHelper.ShowWarning("Invalid option. Please try again.");
                         Console.ReadKey();
                         break;
                 }
             }
         }
 
-        private void ListarMovimientos()
+        private void ListTransactions()
         {
-            UIHelper.MostrarTitulo("Listado de Movimientos de Caja");
+            UIHelper.ShowTitle("Cash Flow Transactions List");
             
             try
             {
@@ -68,61 +68,61 @@ namespace sgi_app.application.ui
                 
                 if (!movimientos.Any())
                 {
-                    UIHelper.MostrarAdvertencia("No hay movimientos de caja registrados.");
+                    UIHelper.ShowWarning("No cash flow transactions are registered.");
                     Console.ReadKey();
                     return;
                 }
                 
-                // Definir las columnas y los valores a mostrar
-                var columnas = new Dictionary<string, Func<MovCaja, object>>
+                // Define columns and values to display
+                var columns = new Dictionary<string, Func<MovCaja, object>>
                 {
                     { "ID", m => m.Id },
-                    { "Fecha", m => m.Fecha.ToShortDateString() },
-                    { "Tipo", m => ObtenerTipoMovimiento(m.TipoMovId) },
-                    { "Concepto", m => m.Concepto },
-                    { "Tercero", m => m.TerceroId },
-                    { "Valor", m => $"{m.Valor:C}" }
+                    { "Date", m => m.Fecha.ToShortDateString() },
+                    { "Type", m => GetTransactionType(m.TipoMovId) },
+                    { "Concept", m => m.Concepto },
+                    { "Third Party", m => m.TerceroId },
+                    { "Amount", m => $"{m.Valor:C}" }
                 };
                 
-                // Usar el método DibujarTabla para mostrar los datos formateados
-                UIHelper.DibujarTabla(movimientos, columnas, "Registro de Movimientos de Caja");
+                // Use DrawTable method to show formatted data
+                UIHelper.DrawTable(movimientos, columns, "Cash Flow Transactions Records");
                 
-                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al listar los movimientos", ex);
+                UIHelper.ShowError("Error listing transactions", ex);
             }
         }
         
-        // Método auxiliar para obtener el tipo de movimiento
-        private string ObtenerTipoMovimiento(int tipoMovId)
+        // Helper method to get transaction type
+        private string GetTransactionType(int tipoMovId)
         {
             switch (tipoMovId)
             {
                 case 1:
-                    return "Entrada";
+                    return "Income";
                 case 2:
-                    return "Salida";
+                    return "Expense";
                 default:
-                    return "Desconocido";
+                    return "Unknown";
             }
         }
 
-        private void CrearMovimiento()
+        private void CreateTransaction()
         {
-            UIHelper.MostrarTitulo("Crear Nuevo Movimiento de Caja");
+            UIHelper.ShowTitle("Create New Cash Flow Transaction");
             
             try
             {
-                // Listar los terceros disponibles
-                UIHelper.MostrarTitulo("Terceros Disponibles");
+                // List available third parties
+                UIHelper.ShowTitle("Available Third Parties");
                 var terceros = _context.Terceros.ToList();
                 
                 if (!terceros.Any())
                 {
-                    UIHelper.MostrarError("No hay terceros registrados. Debe crear un tercero primero.");
+                    UIHelper.ShowError("No third parties are registered. You must create a third party first.");
                     return;
                 }
                 
@@ -131,52 +131,52 @@ namespace sgi_app.application.ui
                     Console.WriteLine($"{t.Id} - {t.Nombre} {t.Apellidos}");
                 }
                 
-                var terceroId = UIHelper.SolicitarEntrada("Ingrese el ID del tercero");
+                var terceroId = UIHelper.RequestInput("Enter third party ID");
                 if (string.IsNullOrWhiteSpace(terceroId))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID del tercero es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. Third party ID is required.");
                     return;
                 }
                 
-                // Verificar que el tercero exista
+                // Verify third party exists
                 var tercero = _context.Terceros.Find(terceroId);
                 if (tercero == null)
                 {
-                    UIHelper.MostrarError($"El tercero con ID {terceroId} no existe. Debe crear el tercero primero.");
+                    UIHelper.ShowError($"Third party with ID {terceroId} does not exist. You must create the third party first.");
                     return;
                 }
                 
-                var concepto = UIHelper.SolicitarEntrada("Ingrese el concepto del movimiento");
+                var concepto = UIHelper.RequestInput("Enter transaction concept");
                 if (string.IsNullOrWhiteSpace(concepto))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El concepto es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. Concept is required.");
                     return;
                 }
                 
-                // Mostrar opciones de tipo de movimiento
-                UIHelper.MostrarTitulo("Tipos de Movimiento");
-                Console.WriteLine("1 - Entrada");
-                Console.WriteLine("2 - Salida");
+                // Show transaction type options
+                UIHelper.ShowTitle("Transaction Types");
+                Console.WriteLine("1 - Income");
+                Console.WriteLine("2 - Expense");
                 
-                var tipoMovIdStr = UIHelper.SolicitarEntrada("Ingrese el tipo de movimiento (1=Entrada, 2=Salida)");
+                var tipoMovIdStr = UIHelper.RequestInput("Enter transaction type (1=Income, 2=Expense)");
                 var tipoMovId = int.Parse(tipoMovIdStr);
                 
                 if (tipoMovId != 1 && tipoMovId != 2)
                 {
-                    UIHelper.MostrarError("El tipo de movimiento debe ser 1 (Entrada) o 2 (Salida).");
+                    UIHelper.ShowError("Transaction type must be 1 (Income) or 2 (Expense).");
                     return;
                 }
                 
-                var valorStr = UIHelper.SolicitarEntrada("Ingrese el valor del movimiento");
+                var valorStr = UIHelper.RequestInput("Enter transaction amount");
                 var valor = decimal.Parse(valorStr);
                 
                 if (valor <= 0)
                 {
-                    UIHelper.MostrarError("El valor debe ser mayor que cero.");
+                    UIHelper.ShowError("Amount must be greater than zero.");
                     return;
                 }
                 
-                var fechaStr = UIHelper.SolicitarEntrada("Ingrese la fecha (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
+                var fechaStr = UIHelper.RequestInput("Enter date (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
                 var fecha = DateTime.Parse(fechaStr);
 
                 var movimiento = new MovCaja { 
@@ -187,41 +187,44 @@ namespace sgi_app.application.ui
                     Fecha = fecha
                 };
                 
-                // Mostrar resumen antes de confirmar
-                UIHelper.MostrarTitulo("Resumen del Movimiento");
-                Console.WriteLine($"Concepto: {movimiento.Concepto}");
-                Console.WriteLine($"Tercero: {tercero.Nombre} {tercero.Apellidos} ({tercero.Id})");
-                Console.WriteLine($"Tipo: {ObtenerTipoMovimiento(movimiento.TipoMovId)}");
-                Console.WriteLine($"Valor: {movimiento.Valor:C}");
-                Console.WriteLine($"Fecha: {movimiento.Fecha.ToShortDateString()}");
+                // Show summary before confirming
+                UIHelper.ShowTitle("Transaction Summary");
+                Console.WriteLine($"Concept: {movimiento.Concepto}");
+                Console.WriteLine($"Third Party: {tercero.Nombre} {tercero.Apellidos} ({tercero.Id})");
+                Console.WriteLine($"Type: {GetTransactionType(movimiento.TipoMovId)}");
+                Console.WriteLine($"Amount: {movimiento.Valor:C}");
+                Console.WriteLine($"Date: {movimiento.Fecha.ToShortDateString()}");
                 
-                if (UIHelper.Confirmar("¿Desea guardar este movimiento?"))
+                if (UIHelper.Confirm("Do you want to save this transaction?"))
                 {
                     _context.MovCaja.Add(movimiento);
                     _context.SaveChanges();
-                    UIHelper.MostrarExito($"Movimiento creado exitosamente con ID: {movimiento.Id}");
+                    UIHelper.ShowSuccess($"Transaction created successfully with ID: {movimiento.Id}");
                 }
                 else
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                    UIHelper.ShowWarning("Operation cancelled by user.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al crear el movimiento", ex);
+                UIHelper.ShowError("Error creating transaction", ex);
             }
         }
 
-        private void EditarMovimiento()
+        private void UpdateTransaction()
         {
-            UIHelper.MostrarTitulo("Editar Movimiento de Caja");
+            UIHelper.ShowTitle("Edit Cash Flow Transaction");
             
             try
             {
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del movimiento a editar");
+                // Show list of available transactions
+                ListTransactions();
+                
+                var idStr = UIHelper.RequestInput("Enter ID of the transaction to edit");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
@@ -230,102 +233,105 @@ namespace sgi_app.application.ui
 
                 if (movimiento != null)
                 {
+                    // Get third party info
                     var tercero = _context.Terceros.Find(movimiento.TerceroId);
                     
-                    // Mostrar información actual
-                    UIHelper.MostrarTitulo("Información Actual");
+                    // Show current information
+                    UIHelper.ShowTitle("Current Information");
                     Console.WriteLine($"ID: {movimiento.Id}");
-                    Console.WriteLine($"Concepto: {movimiento.Concepto}");
-                    Console.WriteLine($"Tercero: {tercero?.Nombre} {tercero?.Apellidos} ({movimiento.TerceroId})");
-                    Console.WriteLine($"Tipo: {ObtenerTipoMovimiento(movimiento.TipoMovId)}");
-                    Console.WriteLine($"Valor: {movimiento.Valor:C}");
-                    Console.WriteLine($"Fecha: {movimiento.Fecha.ToShortDateString()}");
-                    Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
+                    Console.WriteLine($"Concept: {movimiento.Concepto}");
+                    Console.WriteLine($"Third Party: {(tercero != null ? $"{tercero.Nombre} {tercero.Apellidos}" : "Unknown")} ({movimiento.TerceroId})");
+                    Console.WriteLine($"Type: {GetTransactionType(movimiento.TipoMovId)}");
+                    Console.WriteLine($"Amount: {movimiento.Valor:C}");
+                    Console.WriteLine($"Date: {movimiento.Fecha.ToShortDateString()}");
+                    Console.WriteLine("\nEnter new values or leave blank to keep current:");
                     
-                    var concepto = UIHelper.SolicitarEntrada("Nuevo concepto", movimiento.Concepto);
-                    
-                    // Listar los terceros disponibles
-                    UIHelper.MostrarTitulo("Terceros Disponibles");
+                    // List available third parties
+                    UIHelper.ShowTitle("Available Third Parties");
                     var terceros = _context.Terceros.ToList();
                     foreach (var t in terceros)
                     {
                         Console.WriteLine($"{t.Id} - {t.Nombre} {t.Apellidos}");
                     }
                     
-                    var terceroId = UIHelper.SolicitarEntrada("Nuevo ID del tercero", movimiento.TerceroId);
+                    var terceroId = UIHelper.RequestInput("New third party ID", movimiento.TerceroId);
                     
-                    // Verificar que el tercero exista
+                    // Verify third party exists
                     var nuevoTercero = _context.Terceros.Find(terceroId);
                     if (nuevoTercero == null)
                     {
-                        UIHelper.MostrarError($"El tercero con ID {terceroId} no existe. Debe crear el tercero primero.");
+                        UIHelper.ShowError($"Third party with ID {terceroId} does not exist. You must create the third party first.");
                         return;
                     }
                     
-                    // Mostrar opciones de tipo de movimiento
-                    UIHelper.MostrarTitulo("Tipos de Movimiento");
-                    Console.WriteLine("1 - Entrada");
-                    Console.WriteLine("2 - Salida");
+                    var concepto = UIHelper.RequestInput("New concept", movimiento.Concepto);
                     
-                    var tipoMovIdStr = UIHelper.SolicitarEntrada("Nuevo tipo de movimiento (1=Entrada, 2=Salida)", movimiento.TipoMovId.ToString());
+                    // Show transaction type options
+                    UIHelper.ShowTitle("Transaction Types");
+                    Console.WriteLine("1 - Income");
+                    Console.WriteLine("2 - Expense");
+                    
+                    var tipoMovIdStr = UIHelper.RequestInput("New transaction type (1=Income, 2=Expense)", movimiento.TipoMovId.ToString());
                     var tipoMovId = int.Parse(tipoMovIdStr);
                     
                     if (tipoMovId != 1 && tipoMovId != 2)
                     {
-                        UIHelper.MostrarError("El tipo de movimiento debe ser 1 (Entrada) o 2 (Salida).");
+                        UIHelper.ShowError("Transaction type must be 1 (Income) or 2 (Expense).");
                         return;
                     }
                     
-                    var valorStr = UIHelper.SolicitarEntrada("Nuevo valor", movimiento.Valor.ToString());
+                    var valorStr = UIHelper.RequestInput("New amount", movimiento.Valor.ToString());
                     var valor = decimal.Parse(valorStr);
                     
                     if (valor <= 0)
                     {
-                        UIHelper.MostrarError("El valor debe ser mayor que cero.");
+                        UIHelper.ShowError("Amount must be greater than zero.");
                         return;
                     }
                     
-                    var fechaStr = UIHelper.SolicitarEntrada("Nueva fecha (YYYY-MM-DD)", movimiento.Fecha.ToString("yyyy-MM-dd"));
-                    var fecha = DateTime.Parse(fechaStr);
+                    var fechaStr = UIHelper.RequestInput("New date (YYYY-MM-DD)", movimiento.Fecha.ToString("yyyy-MM-dd"));
                     
                     movimiento.Concepto = concepto;
                     movimiento.TerceroId = terceroId;
                     movimiento.TipoMovId = tipoMovId;
                     movimiento.Valor = valor;
-                    movimiento.Fecha = fecha;
+                    movimiento.Fecha = DateTime.Parse(fechaStr);
 
-                    if (UIHelper.Confirmar("¿Confirma estos cambios?"))
+                    if (UIHelper.Confirm("Do you confirm these changes?"))
                     {
                         _context.Update(movimiento);
                         _context.SaveChanges();
-                        UIHelper.MostrarExito("Movimiento actualizado exitosamente.");
+                        UIHelper.ShowSuccess("Transaction updated successfully.");
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Movimiento no encontrado.");
+                    UIHelper.ShowError("Transaction not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al actualizar el movimiento", ex);
+                UIHelper.ShowError("Error updating transaction", ex);
             }
         }
 
-        private void EliminarMovimiento()
+        private void DeleteTransaction()
         {
-            UIHelper.MostrarTitulo("Eliminar Movimiento de Caja");
+            UIHelper.ShowTitle("Delete Cash Flow Transaction");
             
             try
             {
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del movimiento a eliminar");
+                // Show list of available transactions
+                ListTransactions();
+                
+                var idStr = UIHelper.RequestInput("Enter ID of the transaction to delete");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
@@ -334,37 +340,45 @@ namespace sgi_app.application.ui
 
                 if (movimiento != null)
                 {
+                    // Get third party info
                     var tercero = _context.Terceros.Find(movimiento.TerceroId);
                     
-                    // Mostrar información a eliminar
-                    UIHelper.MostrarTitulo("Información del Movimiento a Eliminar");
+                    // Show information of the transaction to delete
+                    UIHelper.ShowTitle("Transaction Information to Delete");
                     Console.WriteLine($"ID: {movimiento.Id}");
-                    Console.WriteLine($"Concepto: {movimiento.Concepto}");
-                    Console.WriteLine($"Tercero: {tercero?.Nombre} {tercero?.Apellidos} ({movimiento.TerceroId})");
-                    Console.WriteLine($"Tipo: {ObtenerTipoMovimiento(movimiento.TipoMovId)}");
-                    Console.WriteLine($"Valor: {movimiento.Valor:C}");
-                    Console.WriteLine($"Fecha: {movimiento.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Concept: {movimiento.Concepto}");
+                    Console.WriteLine($"Third Party: {(tercero != null ? $"{tercero.Nombre} {tercero.Apellidos}" : "Unknown")} ({movimiento.TerceroId})");
+                    Console.WriteLine($"Type: {GetTransactionType(movimiento.TipoMovId)}");
+                    Console.WriteLine($"Amount: {movimiento.Valor:C}");
+                    Console.WriteLine($"Date: {movimiento.Fecha.ToShortDateString()}");
                     
-                    if (UIHelper.Confirmar("¿Está seguro que desea eliminar este movimiento?"))
+                    if (UIHelper.Confirm("Are you ABSOLUTELY sure you want to delete this transaction?"))
                     {
                         _context.MovCaja.Remove(movimiento);
                         _context.SaveChanges();
-                        UIHelper.MostrarExito("Movimiento eliminado exitosamente.");
+                        UIHelper.ShowSuccess("Transaction deleted successfully.");
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Movimiento no encontrado.");
+                    UIHelper.ShowError("Transaction not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al eliminar el movimiento", ex);
+                UIHelper.ShowError("Error deleting transaction", ex);
             }
         }
+        
+        // Maintain backward compatibility
+        private void ListarMovimientos() => ListTransactions();
+        private void CrearMovimiento() => CreateTransaction();
+        private void EditarMovimiento() => UpdateTransaction();
+        private void EliminarMovimiento() => DeleteTransaction();
+        private string ObtenerTipoMovimiento(int tipoMovId) => GetTransactionType(tipoMovId);
     }
 }

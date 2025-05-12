@@ -21,47 +21,47 @@ namespace sgi_app.application.ui
         {
             while (true)
             {
-                UIHelper.MostrarTitulo("Panel de Empleados");
+                UIHelper.ShowTitle("Employees Panel");
                 
-                var opciones = new Dictionary<string, string>
+                var options = new Dictionary<string, string>
                 {
-                    { "1", "Listar Empleados" },
-                    { "2", "Crear Nuevo Empleado" },
-                    { "3", "Editar Empleado" },
-                    { "4", "Eliminar Empleado" }
+                    { "1", "List Employees" },
+                    { "2", "Create New Employee" },
+                    { "3", "Edit Employee" },
+                    { "4", "Delete Employee" }
                 };
                 
-                UIHelper.MostrarMenuOpciones(opciones);
+                UIHelper.ShowMenuOptions(options);
 
                 var option = Console.ReadLine();
 
                 switch (option)
                 {
                     case "1":
-                        ListarEmpleados();
+                        ListEmployees();
                         break;
                     case "2":
-                        await CrearEmpleadoAsync();
+                        await CreateEmployeeAsync();
                         break;
                     case "3":
-                        await EditarEmpleadoAsync();
+                        await UpdateEmployeeAsync();
                         break;
                     case "4":
-                        await EliminarEmpleadoAsync();
+                        await DeleteEmployeeAsync();
                         break;
                     case "0":
                         return;
                     default:
-                        UIHelper.MostrarAdvertencia("Opción no válida. Intente de nuevo.");
+                        UIHelper.ShowWarning("Invalid option. Please try again.");
                         Console.ReadKey();
                         break;
                 }
             }
         }
 
-        private void ListarEmpleados()
+        private void ListEmployees()
         {
-            UIHelper.MostrarTitulo("Listado de Empleados");
+            UIHelper.ShowTitle("Employee List");
             
             try
             {
@@ -69,112 +69,112 @@ namespace sgi_app.application.ui
                 
                 if (!empleados.Any())
                 {
-                    UIHelper.MostrarAdvertencia("No hay empleados registrados.");
+                    UIHelper.ShowWarning("No employees are registered.");
                     Console.ReadKey();
                     return;
                 }
                 
-                // Definir las columnas y los valores a mostrar
-                var columnas = new Dictionary<string, Func<Empleado, object>>
+                // Define columns and values to display
+                var columns = new Dictionary<string, Func<Empleado, object>>
                 {
                     { "ID", e => e.Id },
-                    { "Tercero", e => e.TerceroId },
-                    { "Fecha Ingreso", e => e.FechaIngreso.ToShortDateString() },
-                    { "Salario Base", e => $"{e.SalarioBase:C0}" },
+                    { "Third party", e => e.TerceroId },
+                    { "Hire Date", e => e.FechaIngreso.ToShortDateString() },
+                    { "Base Salary", e => $"{e.SalarioBase:C0}" },
                     { "EPS", e => e.EpsId },
                     { "ARL", e => e.ArlId }
                 };
                 
-                // Usar el método DibujarTabla para mostrar los datos formateados
-                UIHelper.DibujarTabla(empleados, columnas, "Registro de Empleados");
+                // Use DrawTable method to show formatted data
+                UIHelper.DrawTable(empleados, columns, "Employee Records");
                 
-                Console.WriteLine("\nPresione cualquier tecla para continuar...");
+                Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al listar los empleados", ex);
+                UIHelper.ShowError("Error listing employees", ex);
             }
         }
 
-        private async Task CrearEmpleadoAsync()
+        private async Task CreateEmployeeAsync()
         {
-            UIHelper.MostrarTitulo("Crear Nuevo Empleado");
+            UIHelper.ShowTitle("Create New Employee");
             
             try
             {
-                // Mostrar terceros disponibles
-                await MostrarTercerosDisponibles();
+                // Show available third parties
+                await ShowAvailableThirdParties();
                 
-                var terceroId = UIHelper.SolicitarEntrada("Ingrese el ID del tercero");
+                var terceroId = UIHelper.RequestInput("Enter ID of the third party");
                 if (string.IsNullOrWhiteSpace(terceroId))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID del tercero es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. Third party ID is required.");
                     return;
                 }
                 
-                // Verificar que el tercero exista
+                // Verify that third party exists
                 var tercero = await _context.Terceros.FindAsync(terceroId);
                 if (tercero == null)
                 {
-                    UIHelper.MostrarError($"El tercero con ID {terceroId} no existe. Debe crear el tercero primero.");
+                    UIHelper.ShowError($"Third party with ID {terceroId} does not exist. You must create the third party first.");
                     return;
                 }
                 
-                // Verificar que el tercero no esté ya asignado a otro empleado
+                // Verify that third party is not already assigned to another employee
                 var empleadoExistente = await _context.Empleados.FirstOrDefaultAsync(e => e.TerceroId == terceroId);
                 if (empleadoExistente != null)
                 {
-                    UIHelper.MostrarError($"El tercero con ID {terceroId} ya está asignado a otro empleado (ID: {empleadoExistente.Id}).");
+                    UIHelper.ShowError($"Third party with ID {terceroId} is already assigned to another employee (ID: {empleadoExistente.Id}).");
                     return;
                 }
                 
-                var fechaIngresoStr = UIHelper.SolicitarEntrada("Ingrese la fecha de ingreso (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
+                var fechaIngresoStr = UIHelper.RequestInput("Enter hire date (YYYY-MM-DD)", DateTime.Now.ToString("yyyy-MM-dd"));
                 var fechaIngreso = DateTime.Parse(fechaIngresoStr);
                 
-                var salarioBaseStr = UIHelper.SolicitarEntrada("Ingrese el salario base");
+                var salarioBaseStr = UIHelper.RequestInput("Enter base salary");
                 if (string.IsNullOrWhiteSpace(salarioBaseStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El salario base es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. Base salary is required.");
                     return;
                 }
                 var salarioBase = double.Parse(salarioBaseStr);
                 
-                // Mostrar EPS disponibles
-                await MostrarEPSDisponibles();
+                // Show available EPS
+                await ShowAvailableEPS();
                 
-                var epsIdStr = UIHelper.SolicitarEntrada("Ingrese el ID de la EPS");
+                var epsIdStr = UIHelper.RequestInput("Enter EPS ID");
                 if (string.IsNullOrWhiteSpace(epsIdStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID de la EPS es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. EPS ID is required.");
                     return;
                 }
                 var epsId = int.Parse(epsIdStr);
                 
-                // Verificar que la EPS exista
+                // Verify that EPS exists
                 var eps = await _context.Set<EPS>().FindAsync(epsId);
                 if (eps == null)
                 {
-                    UIHelper.MostrarError($"La EPS con ID {epsId} no existe. Debe crearla primero.");
+                    UIHelper.ShowError($"EPS with ID {epsId} does not exist. You must create it first.");
                     return;
                 }
                 
-                // Mostrar ARL disponibles
-                await MostrarARLDisponibles();
+                // Show available ARL
+                await ShowAvailableARL();
                 
-                var arlIdStr = UIHelper.SolicitarEntrada("Ingrese el ID de la ARL");
+                var arlIdStr = UIHelper.RequestInput("Enter ARL ID");
                 if (string.IsNullOrWhiteSpace(arlIdStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID de la ARL es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ARL ID is required.");
                     return;
                 }
                 var arlId = int.Parse(arlIdStr);
                 
-                // Verificar que la ARL exista
+                // Verify that ARL exists
                 var arl = await _context.Set<ARL>().FindAsync(arlId);
                 if (arl == null)
                 {
-                    UIHelper.MostrarError($"La ARL con ID {arlId} no existe. Debe crearla primero.");
+                    UIHelper.ShowError($"ARL with ID {arlId} does not exist. You must create it first.");
                     return;
                 }
 
@@ -186,44 +186,44 @@ namespace sgi_app.application.ui
                     ArlId = arlId 
                 };
                 
-                // Mostrar resumen antes de confirmar
-                UIHelper.MostrarTitulo("Resumen del Empleado");
-                Console.WriteLine($"Tercero: {empleado.TerceroId}");
-                Console.WriteLine($"Fecha Ingreso: {empleado.FechaIngreso.ToShortDateString()}");
-                Console.WriteLine($"Salario Base: {empleado.SalarioBase:C0}");
+                // Show summary before confirming
+                UIHelper.ShowTitle("Employee Summary");
+                Console.WriteLine($"Third party: {empleado.TerceroId}");
+                Console.WriteLine($"Hire Date: {empleado.FechaIngreso.ToShortDateString()}");
+                Console.WriteLine($"Base Salary: {empleado.SalarioBase:C0}");
                 Console.WriteLine($"EPS: {empleado.EpsId}");
                 Console.WriteLine($"ARL: {empleado.ArlId}");
                 
-                if (UIHelper.Confirmar("¿Desea guardar este empleado?"))
+                if (UIHelper.Confirm("Do you want to save this employee?"))
                 {
                     _context.Empleados.Add(empleado);
                     await _context.SaveChangesAsync();
-                    UIHelper.MostrarExito($"Empleado creado exitosamente con ID: {empleado.Id}");
+                    UIHelper.ShowSuccess($"Employee created successfully with ID: {empleado.Id}");
                 }
                 else
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                    UIHelper.ShowWarning("Operation cancelled by user.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al crear el empleado", ex);
+                UIHelper.ShowError("Error creating employee", ex);
             }
         }
 
-        private async Task EditarEmpleadoAsync()
+        private async Task UpdateEmployeeAsync()
         {
-            UIHelper.MostrarTitulo("Editar Empleado");
+            UIHelper.ShowTitle("Edit Employee");
             
             try
             {
-                // Mostrar lista de empleados disponibles
-                ListarEmpleados();
+                // Show list of available employees
+                ListEmployees();
                 
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del empleado a editar");
+                var idStr = UIHelper.RequestInput("Enter ID of the employee to edit");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
@@ -232,68 +232,68 @@ namespace sgi_app.application.ui
 
                 if (empleado != null)
                 {
-                    // Mostrar información actual
-                    UIHelper.MostrarTitulo("Información Actual");
+                    // Show current information
+                    UIHelper.ShowTitle("Current Information");
                     Console.WriteLine($"ID: {empleado.Id}");
-                    Console.WriteLine($"Tercero: {empleado.TerceroId}");
-                    Console.WriteLine($"Fecha Ingreso: {empleado.FechaIngreso.ToShortDateString()}");
-                    Console.WriteLine($"Salario Base: {empleado.SalarioBase:C0}");
+                    Console.WriteLine($"Third party: {empleado.TerceroId}");
+                    Console.WriteLine($"Hire Date: {empleado.FechaIngreso.ToShortDateString()}");
+                    Console.WriteLine($"Base Salary: {empleado.SalarioBase:C0}");
                     Console.WriteLine($"EPS: {empleado.EpsId}");
                     Console.WriteLine($"ARL: {empleado.ArlId}");
-                    Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
+                    Console.WriteLine("\nEnter new values or leave blank to keep current:");
                     
-                    // Mostrar terceros disponibles
-                    await MostrarTercerosDisponibles();
+                    // Show available third parties
+                    await ShowAvailableThirdParties();
                     
-                    var terceroId = UIHelper.SolicitarEntrada("Nuevo ID del tercero", empleado.TerceroId);
+                    var terceroId = UIHelper.RequestInput("New Third party ID", empleado.TerceroId.ToString());
                     
-                    // Verificar que el tercero exista
+                    // Verify that third party exists
                     var tercero = await _context.Terceros.FindAsync(terceroId);
                     if (tercero == null)
                     {
-                        UIHelper.MostrarError($"El tercero con ID {terceroId} no existe. Debe crear el tercero primero.");
+                        UIHelper.ShowError($"Third party with ID {terceroId} does not exist. You must create the third party first.");
                         return;
                     }
                     
-                    // Si cambia el tercero, verificar que no esté asignado a otro empleado
+                    // If third party changes, verify it's not assigned to another employee
                     if (terceroId != empleado.TerceroId)
                     {
                         var empleadoExistente = await _context.Empleados.FirstOrDefaultAsync(e => e.TerceroId == terceroId && e.Id != id);
                         if (empleadoExistente != null)
                         {
-                            UIHelper.MostrarError($"El tercero con ID {terceroId} ya está asignado a otro empleado (ID: {empleadoExistente.Id}).");
+                            UIHelper.ShowError($"Third party with ID {terceroId} is already assigned to another employee (ID: {empleadoExistente.Id}).");
                             return;
                         }
                     }
                     
-                    var fechaIngresoStr = UIHelper.SolicitarEntrada("Nueva fecha de ingreso (YYYY-MM-DD)", empleado.FechaIngreso.ToString("yyyy-MM-dd"));
-                    var salarioBaseStr = UIHelper.SolicitarEntrada("Nuevo salario base", empleado.SalarioBase.ToString());
+                    var fechaIngresoStr = UIHelper.RequestInput("New hire date (YYYY-MM-DD)", empleado.FechaIngreso.ToString("yyyy-MM-dd"));
+                    var salarioBaseStr = UIHelper.RequestInput("New base salary", empleado.SalarioBase.ToString());
                     
-                    // Mostrar EPS disponibles
-                    await MostrarEPSDisponibles();
+                    // Show available EPS
+                    await ShowAvailableEPS();
                     
-                    var epsIdStr = UIHelper.SolicitarEntrada("Nuevo ID de la EPS", empleado.EpsId.ToString());
+                    var epsIdStr = UIHelper.RequestInput("New EPS ID", empleado.EpsId.ToString());
                     var epsId = int.Parse(epsIdStr);
                     
-                    // Verificar que la EPS exista
+                    // Verify that EPS exists
                     var eps = await _context.Set<EPS>().FindAsync(epsId);
                     if (eps == null)
                     {
-                        UIHelper.MostrarError($"La EPS con ID {epsId} no existe. Debe crearla primero.");
+                        UIHelper.ShowError($"EPS with ID {epsId} does not exist. You must create it first.");
                         return;
                     }
                     
-                    // Mostrar ARL disponibles
-                    await MostrarARLDisponibles();
+                    // Show available ARL
+                    await ShowAvailableARL();
                     
-                    var arlIdStr = UIHelper.SolicitarEntrada("Nuevo ID de la ARL", empleado.ArlId.ToString());
+                    var arlIdStr = UIHelper.RequestInput("New ARL ID", empleado.ArlId.ToString());
                     var arlId = int.Parse(arlIdStr);
                     
-                    // Verificar que la ARL exista
+                    // Verify that ARL exists
                     var arl = await _context.Set<ARL>().FindAsync(arlId);
                     if (arl == null)
                     {
-                        UIHelper.MostrarError($"La ARL con ID {arlId} no existe. Debe crearla primero.");
+                        UIHelper.ShowError($"ARL with ID {arlId} does not exist. You must create it first.");
                         return;
                     }
                     
@@ -303,50 +303,50 @@ namespace sgi_app.application.ui
                     empleado.EpsId = epsId;
                     empleado.ArlId = arlId;
 
-                    // Mostrar resumen de cambios antes de confirmar
-                    UIHelper.MostrarTitulo("Resumen de Cambios");
+                    // Show changes summary before confirming
+                    UIHelper.ShowTitle("Changes Summary");
                     Console.WriteLine($"ID: {empleado.Id}");
-                    Console.WriteLine($"Tercero: {empleado.TerceroId}");
-                    Console.WriteLine($"Fecha Ingreso: {empleado.FechaIngreso.ToShortDateString()}");
-                    Console.WriteLine($"Salario Base: {empleado.SalarioBase:C0}");
+                    Console.WriteLine($"Third party: {empleado.TerceroId}");
+                    Console.WriteLine($"Hire Date: {empleado.FechaIngreso.ToShortDateString()}");
+                    Console.WriteLine($"Base Salary: {empleado.SalarioBase:C0}");
                     Console.WriteLine($"EPS: {empleado.EpsId}");
                     Console.WriteLine($"ARL: {empleado.ArlId}");
                     
-                    if (UIHelper.Confirmar("¿Confirma estos cambios?"))
+                    if (UIHelper.Confirm("Do you confirm these changes?"))
                     {
                         _context.Update(empleado);
                         await _context.SaveChangesAsync();
-                        UIHelper.MostrarExito("Empleado actualizado exitosamente.");
+                        UIHelper.ShowSuccess("Employee updated successfully.");
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Empleado no encontrado.");
+                    UIHelper.ShowError("Employee not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al actualizar el empleado", ex);
+                UIHelper.ShowError("Error updating employee", ex);
             }
         }
 
-        private async Task EliminarEmpleadoAsync()
+        private async Task DeleteEmployeeAsync()
         {
-            UIHelper.MostrarTitulo("Eliminar Empleado");
+            UIHelper.ShowTitle("Delete Employee");
             
             try
             {
-                // Mostrar lista de empleados disponibles
-                ListarEmpleados();
+                // Show list of available employees
+                ListEmployees();
                 
-                var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del empleado a eliminar");
+                var idStr = UIHelper.RequestInput("Enter ID of the employee to delete");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.ShowWarning("Operation cancelled. ID is required.");
                     return;
                 }
                 
@@ -355,30 +355,30 @@ namespace sgi_app.application.ui
 
                 if (empleado != null)
                 {
-                    // Verificar si existen compras o ventas asociadas
+                    // Verify if there are associated purchases or sales
                     var compras = await _context.Compras.Where(c => c.TerceroEmpId == empleado.TerceroId).ToListAsync();
                     var ventas = await _context.Ventas.Where(v => v.TerceroEnId == empleado.TerceroId).ToListAsync();
                     
                     if (compras.Any() || ventas.Any())
                     {
-                        UIHelper.MostrarAdvertencia($"Este empleado tiene {compras.Count} compras y {ventas.Count} ventas asociadas.");
-                        if (!UIHelper.Confirmar("¿Está seguro que desea eliminar este empleado y sus asociaciones?"))
+                        UIHelper.ShowWarning($"This employee has {compras.Count} purchases and {ventas.Count} sales associated.");
+                        if (!UIHelper.Confirm("Are you ABSOLUTELY sure you want to delete this employee and their associations?"))
                         {
-                            UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                            UIHelper.ShowWarning("Operation cancelled by user.");
                             return;
                         }
                     }
                     
-                    // Mostrar información a eliminar
-                    UIHelper.MostrarTitulo("Información del Empleado a Eliminar");
+                    // Show information to delete
+                    UIHelper.ShowTitle("Employee Information to Delete");
                     Console.WriteLine($"ID: {empleado.Id}");
-                    Console.WriteLine($"Tercero: {empleado.TerceroId}");
-                    Console.WriteLine($"Fecha Ingreso: {empleado.FechaIngreso.ToShortDateString()}");
-                    Console.WriteLine($"Salario Base: {empleado.SalarioBase:C0}");
+                    Console.WriteLine($"Third party: {empleado.TerceroId}");
+                    Console.WriteLine($"Hire Date: {empleado.FechaIngreso.ToShortDateString()}");
+                    Console.WriteLine($"Base Salary: {empleado.SalarioBase:C0}");
                     Console.WriteLine($"EPS: {empleado.EpsId}");
                     Console.WriteLine($"ARL: {empleado.ArlId}");
                     
-                    if (UIHelper.Confirmar("¿Está ABSOLUTAMENTE seguro que desea eliminar este empleado?"))
+                    if (UIHelper.Confirm("Are you ABSOLUTELY sure you want to delete this employee?"))
                     {
                         var strategy = _context.Database.CreateExecutionStrategy();
                         await strategy.ExecuteAsync(async () =>
@@ -391,97 +391,106 @@ namespace sgi_app.application.ui
                                     await _context.SaveChangesAsync();
                                     
                                     await transaction.CommitAsync();
-                                    UIHelper.MostrarExito("Empleado eliminado exitosamente.");
+                                    UIHelper.ShowSuccess("Employee deleted successfully.");
                                 }
                                 catch (Exception ex)
                                 {
                                     await transaction.RollbackAsync();
-                                    throw new Exception("Error al eliminar el empleado. Se han revertido los cambios.", ex);
+                                    throw new Exception("Error deleting employee. Changes have been reverted.", ex);
                                 }
                             }
                         });
                     }
                     else
                     {
-                        UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
+                        UIHelper.ShowWarning("Operation cancelled by user.");
                     }
                 }
                 else
                 {
-                    UIHelper.MostrarError("Empleado no encontrado.");
+                    UIHelper.ShowError("Employee not found.");
                 }
             }
             catch (Exception ex)
             {
-                UIHelper.MostrarError("Error al eliminar el empleado", ex);
+                UIHelper.ShowError("Error deleting employee", ex);
             }
         }
         
-        // Métodos auxiliares para mostrar entidades relacionadas
+        // Helper methods for showing related entities
         
-        private async Task MostrarTercerosDisponibles()
+        private async Task ShowAvailableThirdParties()
         {
-            UIHelper.MostrarTitulo("Terceros Disponibles");
+            UIHelper.ShowTitle("Available Third Parties");
             var terceros = await _context.Terceros.ToListAsync();
             
             if (!terceros.Any())
             {
-                UIHelper.MostrarAdvertencia("No hay terceros registrados. Debe crear un tercero primero.");
+                UIHelper.ShowWarning("No third parties are registered. You must create a third party first.");
                 return;
             }
             
-            var columnas = new Dictionary<string, Func<Terceros, object>>
+            var columns = new Dictionary<string, Func<Terceros, object>>
             {
                 { "ID", t => t.Id },
-                { "Nombre", t => t.Nombre },
-                { "Apellidos", t => t.Apellidos },
+                { "Name", t => t.Nombre },
+                { "Last Name", t => t.Apellidos },
                 { "Email", t => t.Email ?? "N/A" }
             };
             
-            UIHelper.DibujarTabla(terceros, columnas, "Lista de Terceros");
+            UIHelper.DrawTable(terceros, columns, "Third Party List");
             Console.WriteLine();
         }
         
-        private async Task MostrarEPSDisponibles()
+        private async Task ShowAvailableEPS()
         {
-            UIHelper.MostrarTitulo("EPS Disponibles");
+            UIHelper.ShowTitle("Available EPS");
             var epsList = await _context.Set<EPS>().ToListAsync();
             
             if (!epsList.Any())
             {
-                UIHelper.MostrarAdvertencia("No hay EPS registradas.");
+                UIHelper.ShowWarning("No EPS are registered.");
                 return;
             }
             
-            var columnas = new Dictionary<string, Func<EPS, object>>
+            var columns = new Dictionary<string, Func<EPS, object>>
             {
                 { "ID", e => e.Id },
-                { "Nombre", e => e.Nombre }
+                { "Name", e => e.Nombre }
             };
             
-            UIHelper.DibujarTabla(epsList, columnas, "Lista de EPS");
+            UIHelper.DrawTable(epsList, columns, "EPS List");
             Console.WriteLine();
         }
         
-        private async Task MostrarARLDisponibles()
+        private async Task ShowAvailableARL()
         {
-            UIHelper.MostrarTitulo("ARL Disponibles");
+            UIHelper.ShowTitle("Available ARL");
             var arlList = await _context.Set<ARL>().ToListAsync();
             
             if (!arlList.Any())
             {
-                UIHelper.MostrarAdvertencia("No hay ARL registradas.");
+                UIHelper.ShowWarning("No ARL are registered.");
                 return;
             }
             
-            var columnas = new Dictionary<string, Func<ARL, object>>
+            var columns = new Dictionary<string, Func<ARL, object>>
             {
                 { "ID", a => a.Id },
-                { "Nombre", a => a.Nombre }
+                { "Name", a => a.Nombre }
             };
             
-            UIHelper.DibujarTabla(arlList, columnas, "Lista de ARL");
+            UIHelper.DrawTable(arlList, columns, "ARL List");
             Console.WriteLine();
         }
+        
+        // Maintain backward compatibility
+        private void ListarEmpleados() => ListEmployees();
+        private Task CrearEmpleadoAsync() => CreateEmployeeAsync();
+        private Task EditarEmpleadoAsync() => UpdateEmployeeAsync();
+        private Task EliminarEmpleadoAsync() => DeleteEmployeeAsync();
+        private Task MostrarTercerosDisponibles() => ShowAvailableThirdParties();
+        private Task MostrarEPSDisponibles() => ShowAvailableEPS();
+        private Task MostrarARLDisponibles() => ShowAvailableARL();
     }
 }
