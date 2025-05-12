@@ -41,7 +41,8 @@ namespace sgi_app
                     { "6", "Panel de Ventas         - Registro y seguimiento de ventas" },
                     { "7", "Panel de Movimientos    - Control de movimientos en caja" },
                     { "8", "Detalles de Ventas      - Gestión de líneas de venta" },
-                    { "9", "Detalles de Compras     - Gestión de líneas de compra" }
+                    { "9", "Detalles de Compras     - Gestión de líneas de compra" },
+                    { "10", "Planes Promocionales    - Gestión de promociones y descuentos" }
                 };
                 
                 UIHelper.MostrarMenuOpciones(opciones);
@@ -87,6 +88,10 @@ namespace sgi_app
                         var detalleCompraPanel = new DetalleCompraPanel(context);
                         detalleCompraPanel.ShowMenu();
                         break;
+                    case "10":
+                        var planPromocionalPanel = new PlanPromocionalPanel(context);
+                        planPromocionalPanel.ShowMenu();
+                        break;
                     case "0":
                         UIHelper.MostrarPantallaDespedida();
                         return;
@@ -117,6 +122,8 @@ namespace sgi_app.infrastructure.sql
         public DbSet<TipoDocumento> TipoDocumentos { get; set; }
         public DbSet<TipoTercero> TipoTerceros { get; set; }
         public DbSet<Ciudad> Ciudades { get; set; }
+        public DbSet<Plan> Planes { get; set; }
+        public DbSet<PlanProducto> PlanProductos { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
