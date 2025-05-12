@@ -1,148 +1,153 @@
-# 🏪 Sistema de Gestión Integrado (SGI)
+# 🏪 Integrated Management System (SGI)
 
-Sistema de consola para la gestión de inventario, ventas, compras y administración general de negocios, desarrollado en C# con conexión a MySQL.
+Console system for inventory, sales, purchases, and general business management, developed in C# with MySQL connection.
 
-![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
-![.NET](https://img.shields.io/badge/.NET-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
+![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge\&logo=c-sharp\&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET-512BD4?style=for-the-badge\&logo=dotnet\&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge\&logo=mysql\&logoColor=white)
 
-## 📋 Descripción
+## 📋 Description
 
-SGI es una aplicación de consola robusta diseñada para la gestión integral de negocios, permitiendo administrar clientes, productos, proveedores, ventas, compras y movimientos de caja. Implementa una arquitectura limpia y está desarrollada con buenas prácticas de programación.
+SGI is a robust console application designed for comprehensive business management, allowing you to handle clients, products, suppliers, sales, purchases, and cash flow. It follows a clean architecture and is developed using good programming practices.
 
-## 🏗️ Arquitectura
+## 🏗️ Architecture
 
-El proyecto sigue los principios de **Arquitectura Limpia (Clean Architecture)** con tres capas principales:
+The project follows **Clean Architecture** principles with three main layers:
 
-- **Domain**: Contiene las entidades de negocio y reglas de dominio
-- **Infrastructure**: Gestiona la persistencia y acceso a datos
-- **Application**: Implementa la lógica de aplicación y la interfaz de usuario
+* **Domain**: Contains business entities and domain rules
+* **Infrastructure**: Manages data persistence and access
+* **Application**: Implements application logic and the user interface
 
-## ✨ Características principales
+## ✨ Main Features
 
-- **Paneles CRUD completos** para todas las entidades:
-  - 👤 Clientes
-  - 🛒 Compras y Detalles de compra
-  - 👨‍💼 Empleados
-  - 📦 Productos 
-  - 🏭 Proveedores
-  - 🧾 Terceros
-  - 💰 Ventas y Detalles de venta
-  - 💸 Movimientos de Caja
+* **Full CRUD panels** for all entities:
 
-- **Interfaz de consola intuitiva** con:
-  - 🎨 Sistema de colores consistente
-  - 📊 Tablas formateadas para visualización de datos
-  - ✅ Validaciones completas con mensajes claros
-  - ❓ Confirmaciones para operaciones importantes
-  - ⚠️ Manejo de errores robusto
+  * 👤 Clients
+  * 👒 Purchases and Purchase Details
+  * 👨‍💼 Employees
+  * 📦 Products
+  * 🏢 Suppliers
+  * 🧾 Third Parties
+  * 💰 Sales and Sale Details
+  * 💸 Cash Movements
 
-- **Características avanzadas**:
-  - 🔄 Validación de integridad referencial
-  - 🛡️ Verificación de restricciones de clave foránea
-  - 🚫 Prevención de IDs duplicados
-  - 📋 Informes básicos de ventas y movimientos
+* **Intuitive console interface** with:
 
-## 📋 Requisitos previos
+  * 🎨 Consistent color scheme
+  * 📊 Formatted tables for data display
+  * ✅ Comprehensive validations with clear messages
+  * ❓ Confirmations for important operations
+  * ⚠️ Robust error handling
 
-- .NET 6.0 o superior
-- MySQL 5.7 o superior
-- Usuario y base de datos MySQL configurados
+* **Advanced features**:
 
-## 🔧 Instalación y configuración
+  * 🔄 Referential integrity validation
+  * 🛡️ Foreign key constraint checks
+  * 🚫 Duplicate ID prevention
+  * 📋 Basic sales and cash flow reports
 
-### 1. Clonar el repositorio
+## 📋 Prerequisites
+
+* .NET 6.0 or later
+* MySQL 5.7 or later
+* Configured MySQL user and database
+
+## 🔧 Installation & Configuration
+
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/tu-usuario/sgi-app.git
+git clone https://github.com/xkodigo1/sgi-app.git
 cd sgi-app
 ```
 
-### 2. Configurar la base de datos
+### 2. Configure the database
 
-1. Crear una base de datos MySQL llamada `sgi-db`
-2. Crear un usuario con permisos sobre la base de datos:
+1. Create a MySQL database named `sgi-db`
+2. Create a user with privileges on that database:
+
    ```sql
    CREATE USER 'sgiapp'@'localhost' IDENTIFIED BY 'kodigo777';
    GRANT ALL PRIVILEGES ON `sgi-db`.* TO 'sgiapp'@'localhost';
    FLUSH PRIVILEGES;
    ```
-3. Ejecutar el script de creación de tablas:
+3. Run the table creation script:
+
    ```bash
    mysql -u sgiapp -p sgi-db < database/scripts/create_tables.sql
    ```
 
-> ⚠️ **Nota:** Si necesitas personalizar la conexión a la base de datos, modifica el archivo `infrastructure/sql/MySqlSingletonConnection.cs`
+> ⚠️ **Note:** If you need to customize the database connection, edit the file `infrastructure/sql/MySqlSingletonConnection.cs`
 
-### 3. Compilar y ejecutar la aplicación
+### 3. Build and run the application
 
 ```bash
 dotnet build
 dotnet run
 ```
 
-## 📁 Estructura del proyecto
+## 📁 Project Structure
 
 ```
 sgi-app/
 ├── domain/
-│   └── entities/     # Entidades de negocio
+│   └── entities/     # Business entities
 ├── infrastructure/
-│   ├── repositories/ # Implementación de repositorios
-│   └── sql/          # Conexión a base de datos
+│   ├── repositories/ # Repository implementations
+│   └── sql/          # Database connection
 ├── application/
-│   └── ui/           # Paneles de interfaz de usuario
-└── Program.cs        # Punto de entrada
+│   └── ui/           # User interface panels
+└── Program.cs        # Entry point
 ```
 
-## 🚀 Uso del programa
+## 🚀 How to Use
 
-1. **Inicio**: Al ejecutar la aplicación, se mostrará un menú principal con todos los módulos disponibles.
-2. **Navegación**: Use los números del teclado para seleccionar las diferentes opciones.
-3. **Operaciones**: Cada entidad tiene su propio panel con funciones CRUD (Listar, Crear, Editar, Eliminar).
-4. **Validación**: El sistema valida la integridad referencial entre entidades y previene operaciones inválidas.
-5. **Finalización**: Use la opción "0" o "Salir" para volver al menú anterior o salir de la aplicación.
+1. **Startup**: Upon launching the app, a main menu with all available modules will be displayed.
+2. **Navigation**: Use the keyboard numbers to select different options.
+3. **Operations**: Each entity has its own panel with CRUD operations (List, Create, Edit, Delete).
+4. **Validation**: The system validates referential integrity and prevents invalid operations.
+5. **Exit**: Use option "0" or "Exit" to go back or close the app.
 
-### Flujo básico de trabajo:
+### Basic Workflow:
 
-1. Registre **Terceros** (personas físicas o jurídicas)
-2. Configure **Clientes** y **Proveedores** asociados a terceros
-3. Registre **Productos** en inventario
-4. Cree **Compras** a proveedores y sus **Detalles**
-5. Registre **Ventas** a clientes y sus **Detalles**
-6. Gestione **Movimientos de Caja** para registrar otras entradas y salidas
+1. Register **Third Parties** (individuals or companies)
+2. Set up **Clients** and **Suppliers** linked to third parties
+3. Register **Products** in inventory
+4. Create **Purchases** and related **Details**
+5. Register **Sales** to clients and related **Details**
+6. Manage **Cash Movements** for other income and expenses
 
-## 🔒 Seguridad
+## 🔒 Data Integrity & Security
 
-El sistema implementa validaciones para garantizar la integridad de los datos:
+The system includes validations to ensure data integrity:
 
-- Verifica la existencia de registros relacionados antes de crear o actualizar
-- Valida restricciones de clave foránea para evitar referencias inválidas
-- Previene eliminaciones que afectarían la integridad referencial
+* Checks for related records before insert/update
+* Validates foreign key constraints to avoid invalid references
+* Prevents deletions that would break referential integrity
 
-## 🛠️ Tecnologías utilizadas
+## 🛠️ Technologies Used
 
-- **C# (.NET)**: Lenguaje principal y framework
-- **Entity Framework Core**: ORM para acceso a datos
-- **MySQL**: Sistema de gestión de base de datos
-- **Arquitectura Limpia**: Patrón de arquitectura 
-- **Patrón Repositorio**: Para abstracción de acceso a datos
-- **Singleton**: Para manejo de conexión a base de datos
+* **C# (.NET)**: Main programming language and framework
+* **Entity Framework Core**: ORM for data access
+* **MySQL**: Relational database system
+* **Clean Architecture**: Design pattern
+* **Repository Pattern**: For data abstraction
+* **Singleton**: For database connection management
 
-## 👥 Contribución
+## 👥 Contribution
 
-Si deseas contribuir al proyecto:
+If you want to contribute:
 
-1. Realiza un fork del repositorio
-2. Crea una nueva rama (`git checkout -b feature/amazing-feature`)
-3. Realiza tus cambios y commitea (`git commit -m 'feat: add amazing feature'`)
-4. Envía tu rama (`git push origin feature/amazing-feature`)
-5. Abre un Pull Request
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes and commit (`git commit -m 'feat: add amazing feature'`)
+4. Push the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 Licencia
+## 📄 License
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
 
 ---
 
-Desarrollado con esfuerzo como proyecto educativo
+Developed with effort as an educational project.
