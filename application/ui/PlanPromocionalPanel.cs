@@ -344,31 +344,32 @@ namespace sgi_app.application.ui
                 }
 
                 var planId = int.Parse(idStr);
-                var plan = _context.Set<Plan>().Find(planId);
+                
+                // Obtener los productos usando una consulta directa
+                var productos = _context.Set<Producto>()
+                    .Join(_context.Set<PlanProducto>(),
+                        p => p.Id,
+                        pp => pp.ProductoId,
+                        (p, pp) => new { Producto = p, PlanProducto = pp })
+                    .Where(x => x.PlanProducto.PlanId == planId)
+                    .Select(x => x.Producto)
+                    .ToList();
 
-                if (plan == null)
+                if (!productos.Any())
                 {
-                    UIHelper.MostrarError("Plan no encontrado.");
+                    UIHelper.MostrarAdvertencia("No hay productos en este plan.");
                     return;
                 }
-
-                var productosEnPlan = _context.Set<PlanProducto>()
-                    .Where(pp => pp.PlanId == planId)
-                    .Join(_context.Set<Producto>(),
-                        pp => pp.ProductoId,
-                        p => p.Id,
-                        (pp, p) => p)
-                    .ToList();
 
                 var columnas = new Dictionary<string, Func<Producto, object>>
                 {
                     { "ID", p => p.Id },
                     { "Nombre", p => p.Nombre },
-                    { "Precio", p => p.Precio },
+                    { "Precio", p => p.Precio.ToString("C2") },
                     { "Stock", p => p.Stock }
                 };
 
-                UIHelper.DibujarTabla(productosEnPlan, columnas, $"Productos en Plan: {plan.Nombre}");
+                UIHelper.DibujarTabla(productos, columnas, $"Productos en Plan");
                 
                 Console.WriteLine("\nPresione cualquier tecla para continuar...");
                 Console.ReadKey();

@@ -61,9 +61,9 @@ namespace sgi_app.application.ui
             }
         }
 
-        private void ListarProveedores()
+        private void ListarProveedores(string titulo = "Listado de Proveedores")
         {
-            UIHelper.MostrarTitulo("Listado de Proveedores");
+            UIHelper.MostrarTitulo(titulo);
             
             try
             {
@@ -87,7 +87,7 @@ namespace sgi_app.application.ui
                 };
                 
                 // Usar el método DibujarTabla para mostrar los datos formateados
-                UIHelper.DibujarTabla(proveedores, columnas, "Proveedores Registrados");
+                UIHelper.DibujarTabla(proveedores, columnas, titulo);
                 
                 Console.WriteLine("\nPresione cualquier tecla para continuar...");
                 Console.ReadKey();
@@ -131,10 +131,17 @@ namespace sgi_app.application.ui
                     return;
                 }
                 
-                foreach (var t in terceros)
+                // Definir las columnas para mostrar los terceros
+                var columnasTerceros = new Dictionary<string, Func<Terceros, object>>
                 {
-                    Console.WriteLine($"{t.Id} - {t.Nombre} {t.Apellidos}");
-                }
+                    { "ID", t => t.Id },
+                    { "Nombre", t => t.Nombre },
+                    { "Apellidos", t => t.Apellidos },
+                    { "Email", t => t.Email ?? "No registrado" }
+                };
+                
+                // Mostrar la tabla de terceros
+                UIHelper.DibujarTabla(terceros, columnasTerceros, "Terceros Disponibles");
                 
                 var terceroId = UIHelper.SolicitarEntrada("Ingrese el ID del tercero para asociar al proveedor");
                 if (string.IsNullOrWhiteSpace(terceroId))
@@ -211,57 +218,30 @@ namespace sgi_app.application.ui
             
             try
             {
+                // Mostrar lista de proveedores disponibles
+                ListarProveedores("Proveedores Disponibles para Editar");
+                
                 var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del proveedor a editar");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.MostrarAdvertencia("El ID es obligatorio.");
                     return;
                 }
-                
-                var id = idStr;
+
+                var id = int.Parse(idStr);
                 var proveedor = _proveedorRepository.GetById(id);
 
                 if (proveedor != null)
                 {
                     var tercero = _context.Terceros.Find(proveedor.TerceroId);
                     
-                    // Mostrar información actual
                     UIHelper.MostrarTitulo("Información Actual");
                     Console.WriteLine($"ID: {proveedor.Id}");
                     Console.WriteLine($"Tercero: {tercero?.Nombre} {tercero?.Apellidos} ({proveedor.TerceroId})");
                     Console.WriteLine($"Descuento: {proveedor.Dcto:P2}");
                     Console.WriteLine($"Día de Pago: {proveedor.DiaPago}");
                     Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
-                    
-                    // Listar los terceros disponibles
-                    UIHelper.MostrarTitulo("Terceros Disponibles");
-                    var terceros = _context.Terceros.ToList();
-                    foreach (var t in terceros)
-                    {
-                        Console.WriteLine($"{t.Id} - {t.Nombre} {t.Apellidos}");
-                    }
-                    
-                    var terceroId = UIHelper.SolicitarEntrada("Nuevo ID del tercero", proveedor.TerceroId);
-                    
-                    // Verificar que el tercero exista
-                    var nuevoTercero = _context.Terceros.Find(terceroId);
-                    if (nuevoTercero == null)
-                    {
-                        UIHelper.MostrarError($"El tercero con ID {terceroId} no existe. Debe crear el tercero primero.");
-                        return;
-                    }
-                    
-                    // Si el tercero es diferente, verificar que no esté asociado a otro proveedor
-                    if (terceroId != proveedor.TerceroId)
-                    {
-                        var proveedorExistente = _proveedorRepository.GetAll().FirstOrDefault(p => p.TerceroId == terceroId && p.Id != proveedor.Id);
-                        if (proveedorExistente != null)
-                        {
-                            UIHelper.MostrarError($"El tercero con ID {terceroId} ya está asociado a otro proveedor.");
-                            return;
-                        }
-                    }
-                    
+
                     var dctoStr = UIHelper.SolicitarEntrada("Nuevo descuento (0-1)", proveedor.Dcto.ToString());
                     var dcto = double.Parse(dctoStr);
                     
@@ -279,8 +259,7 @@ namespace sgi_app.application.ui
                         UIHelper.MostrarError("El día de pago debe ser un valor entre 1 y 31.");
                         return;
                     }
-                    
-                    proveedor.TerceroId = terceroId;
+
                     proveedor.Dcto = dcto;
                     proveedor.DiaPago = diaPago;
 
@@ -311,39 +290,29 @@ namespace sgi_app.application.ui
             
             try
             {
+                // Mostrar lista de proveedores
+                ListarProveedores();
+                
                 var idStr = UIHelper.SolicitarEntrada("Ingrese el ID del proveedor a eliminar");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
-                    UIHelper.MostrarAdvertencia("Operación cancelada. El ID es obligatorio.");
+                    UIHelper.MostrarAdvertencia("El ID es obligatorio.");
                     return;
                 }
-                
-                var id = idStr;
+
+                var id = int.Parse(idStr);
                 var proveedor = _proveedorRepository.GetById(id);
 
                 if (proveedor != null)
                 {
                     var tercero = _context.Terceros.Find(proveedor.TerceroId);
                     
-                    // Verificar si existen compras asociadas
-                    var compras = _context.Compras.Where(c => c.TerceroProvId == proveedor.TerceroId).ToList();
-                    if (compras.Any())
-                    {
-                        UIHelper.MostrarAdvertencia($"Este proveedor tiene {compras.Count} compras asociadas.");
-                        if (!UIHelper.Confirmar("¿Está seguro que desea continuar?"))
-                        {
-                            UIHelper.MostrarAdvertencia("Operación cancelada por el usuario.");
-                            return;
-                        }
-                    }
-                    
-                    // Mostrar información a eliminar
                     UIHelper.MostrarTitulo("Información del Proveedor a Eliminar");
                     Console.WriteLine($"ID: {proveedor.Id}");
                     Console.WriteLine($"Tercero: {tercero?.Nombre} {tercero?.Apellidos} ({proveedor.TerceroId})");
                     Console.WriteLine($"Descuento: {proveedor.Dcto:P2}");
                     Console.WriteLine($"Día de Pago: {proveedor.DiaPago}");
-                    
+
                     if (UIHelper.Confirmar("¿Está seguro que desea eliminar este proveedor?"))
                     {
                         _proveedorRepository.Delete(id);

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using sgi_app.infrastructure.sql;
 using sgi_app.domain.entities;
 
@@ -16,7 +17,7 @@ namespace sgi_app.application.ui
             _context = context;
         }
 
-        public void ShowMenu()
+        public async Task ShowMenu()
         {
             while (true)
             {
@@ -46,7 +47,7 @@ namespace sgi_app.application.ui
                         EditarCompra();
                         break;
                     case "4":
-                        EliminarCompra();
+                        await EliminarCompraAsync();
                         break;
                     case "0":
                         return;
@@ -258,12 +259,15 @@ namespace sgi_app.application.ui
             }
         }
 
-        private void EliminarCompra()
+        private async Task EliminarCompraAsync()
         {
             UIHelper.MostrarTitulo("Eliminar Compra");
             
             try
             {
+                // Mostrar lista de compras disponibles
+                ListarCompras();
+                
                 var idStr = UIHelper.SolicitarEntrada("Ingrese el ID de la compra a eliminar");
                 if (string.IsNullOrWhiteSpace(idStr))
                 {
@@ -272,36 +276,67 @@ namespace sgi_app.application.ui
                 }
                 
                 var id = int.Parse(idStr);
-                var compra = _context.Compras.Find(id);
+                var compra = await _context.Compras.FindAsync(id);
 
                 if (compra != null)
                 {
                     // Verificar si existen detalles asociados
-                    var detalles = _context.DetalleCompras.Where(d => d.CompraId == id).ToList();
+                    var detalles = await _context.DetalleCompras.Where(d => d.CompraId == id).ToListAsync();
                     if (detalles.Any())
                     {
                         UIHelper.MostrarAdvertencia($"La compra tiene {detalles.Count} detalles asociados. Estos serán eliminados también.");
+                        
+                        // Mostrar los detalles que se eliminarán
+                        var columnasDetalles = new Dictionary<string, Func<DetalleCompra, object>>
+                        {
+                            { "ID", d => d.Id },
+                            { "Producto", d => d.ProductoId },
+                            { "Cantidad", d => d.Cantidad },
+                            { "Valor Unit.", d => $"{d.Valor:C}" },
+                            { "Total", d => $"{(d.Cantidad * d.Valor):C}" }
+                        };
+                        UIHelper.DibujarTabla(detalles, columnasDetalles, "Detalles que serán eliminados");
                     }
                     
-                    // Mostrar información a eliminar
+                    // Mostrar información de la compra a eliminar
                     UIHelper.MostrarTitulo("Información de la Compra a Eliminar");
                     Console.WriteLine($"ID: {compra.Id}");
                     Console.WriteLine($"Proveedor: {compra.TerceroProvId}");
                     Console.WriteLine($"Empleado: {compra.TerceroEmpId}");
                     Console.WriteLine($"Documento: {compra.DocCompra}");
                     Console.WriteLine($"Fecha: {compra.Fecha.ToShortDateString()}");
+                    Console.WriteLine($"Total: {ObtenerTotalCompra(compra.Id)}");
                     
-                    if (UIHelper.Confirmar("¿Está seguro que desea eliminar esta compra y todos sus detalles?"))
+                    if (UIHelper.Confirmar("¿Está ABSOLUTAMENTE seguro que desea eliminar esta compra y todos sus detalles?"))
                     {
-                        // Eliminar detalles asociados primero
-                        foreach (var detalle in detalles)
+                        var strategy = _context.Database.CreateExecutionStrategy();
+                        await strategy.ExecuteAsync(async () =>
                         {
-                            _context.DetalleCompras.Remove(detalle);
-                        }
-                        
-                        _context.Compras.Remove(compra);
-                        _context.SaveChanges();
-                        UIHelper.MostrarExito("Compra y sus detalles eliminados exitosamente.");
+                            using (var transaction = await _context.Database.BeginTransactionAsync())
+                            {
+                                try
+                                {
+                                    // Primero eliminamos los detalles
+                                    if (detalles.Any())
+                                    {
+                                        _context.DetalleCompras.RemoveRange(detalles);
+                                        await _context.SaveChangesAsync(); // Guardamos primero los cambios de los detalles
+                                    }
+                                    
+                                    // Luego eliminamos la compra
+                                    _context.Compras.Remove(compra);
+                                    await _context.SaveChangesAsync(); // Guardamos los cambios de la compra
+                                    
+                                    await transaction.CommitAsync(); // Confirmamos la transacción
+                                    UIHelper.MostrarExito("Compra y sus detalles eliminados exitosamente.");
+                                }
+                                catch (Exception ex)
+                                {
+                                    await transaction.RollbackAsync();
+                                    throw new Exception("Error al eliminar la compra y sus detalles. Se han revertido los cambios.", ex);
+                                }
+                            }
+                        });
                     }
                     else
                     {

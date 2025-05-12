@@ -16,6 +16,34 @@ namespace sgi_app.application.ui
             _context = context;
         }
 
+        private void MostrarListaProductos(string titulo = "Productos Disponibles")
+        {
+            try
+            {
+                var productos = _context.Set<Producto>().ToList();
+                
+                if (!productos.Any())
+                {
+                    UIHelper.MostrarAdvertencia("No hay productos registrados.");
+                    Console.ReadKey();
+                    return;
+                }
+                
+                var columnas = new Dictionary<string, Func<Producto, object>>
+                {
+                    { "ID", p => p.Id },
+                    { "Nombre", p => p.Nombre },
+                    { "Stock", p => p.Stock },
+                    { "Precio", p => p.Precio.ToString("C2") }
+                };
+                UIHelper.DibujarTabla(productos, columnas, titulo);
+            }
+            catch (Exception ex)
+            {
+                UIHelper.MostrarError("Error al mostrar la lista de productos", ex);
+            }
+        }
+
         public void ShowMenu()
         {
             while (true)
@@ -64,7 +92,14 @@ namespace sgi_app.application.ui
             
             try
             {
-                var productos = _context.Productos.ToList();
+                var productos = _context.Set<Producto>().ToList();
+                
+                if (!productos.Any())
+                {
+                    UIHelper.MostrarAdvertencia("No hay productos registrados.");
+                    Console.ReadKey();
+                    return;
+                }
                 
                 // Definir las columnas y los valores a mostrar
                 var columnas = new Dictionary<string, Func<Producto, object>>
@@ -74,7 +109,7 @@ namespace sgi_app.application.ui
                     { "Stock", p => p.Stock },
                     { "Stock Mín", p => p.StockMin },
                     { "Stock Máx", p => p.StockMax },
-                    { "Código Barras", p => p.Barcode ?? "No registrado" },
+                    { "Precio", p => p.Precio.ToString("C2") },
                     { "Estado", p => ObtenerEstadoStock(p) }
                 };
                 
@@ -107,7 +142,7 @@ namespace sgi_app.application.ui
             
             try
             {
-                var id = UIHelper.SolicitarEntrada("Ingrese el ID del producto");
+                var id = UIHelper.SolicitarEntrada("Ingrese el ID del producto (ejemplo: P003)");
                 
                 // Verificar que no exista ya un producto con este ID
                 var productoExistente = _context.Productos.Find(id);
@@ -121,19 +156,22 @@ namespace sgi_app.application.ui
                 var stockStr = UIHelper.SolicitarEntrada("Ingrese el stock inicial");
                 var stockMinStr = UIHelper.SolicitarEntrada("Ingrese el stock mínimo");
                 var stockMaxStr = UIHelper.SolicitarEntrada("Ingrese el stock máximo");
-                var barcode = UIHelper.SolicitarEntrada("Ingrese el código de barras (opcional)");
+                var precioStr = UIHelper.SolicitarEntrada("Ingrese el precio del producto");
                 
                 var stock = int.Parse(stockStr);
                 var stockMin = int.Parse(stockMinStr);
                 var stockMax = int.Parse(stockMaxStr);
+                var precio = decimal.Parse(precioStr);
 
                 var producto = new Producto { 
                     Id = id, 
                     Nombre = nombre, 
                     Stock = stock, 
                     StockMin = stockMin, 
-                    StockMax = stockMax, 
-                    Barcode = string.IsNullOrEmpty(barcode) ? null : barcode 
+                    StockMax = stockMax,
+                    Precio = precio,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
                 
                 // Mostrar resumen antes de confirmar
@@ -143,7 +181,7 @@ namespace sgi_app.application.ui
                 Console.WriteLine($"Stock: {producto.Stock}");
                 Console.WriteLine($"Stock Min: {producto.StockMin}");
                 Console.WriteLine($"Stock Max: {producto.StockMax}");
-                Console.WriteLine($"Código de Barras: {producto.Barcode ?? "No registrado"}");
+                Console.WriteLine($"Precio: {producto.Precio:C2}");
                 
                 if (UIHelper.Confirmar("¿Desea guardar este producto?"))
                 {
@@ -168,7 +206,11 @@ namespace sgi_app.application.ui
             
             try
             {
-                var id = UIHelper.SolicitarEntrada("Ingrese el ID del producto a editar");
+                // Mostrar lista de productos disponibles
+                MostrarListaProductos("Productos Disponibles para Editar");
+                Console.WriteLine("\nSeleccione el ID del producto que desea editar:");
+                
+                var id = UIHelper.SolicitarEntrada("ID del producto");
                 var producto = _context.Productos.Find(id);
 
                 if (producto != null)
@@ -180,20 +222,21 @@ namespace sgi_app.application.ui
                     Console.WriteLine($"Stock: {producto.Stock}");
                     Console.WriteLine($"Stock Min: {producto.StockMin}");
                     Console.WriteLine($"Stock Max: {producto.StockMax}");
-                    Console.WriteLine($"Código de Barras: {producto.Barcode ?? "No registrado"}");
+                    Console.WriteLine($"Precio: {producto.Precio:C2}");
                     Console.WriteLine("\nIngrese nuevos valores o deje en blanco para mantener los actuales:");
                     
                     var nombre = UIHelper.SolicitarEntrada("Nuevo nombre", producto.Nombre);
                     var stockStr = UIHelper.SolicitarEntrada("Nuevo stock", producto.Stock.ToString());
                     var stockMinStr = UIHelper.SolicitarEntrada("Nuevo stock mínimo", producto.StockMin.ToString());
                     var stockMaxStr = UIHelper.SolicitarEntrada("Nuevo stock máximo", producto.StockMax.ToString());
-                    var barcode = UIHelper.SolicitarEntrada("Nuevo código de barras", producto.Barcode ?? "");
+                    var precioStr = UIHelper.SolicitarEntrada("Nuevo precio", producto.Precio.ToString());
                     
                     producto.Nombre = nombre;
                     producto.Stock = int.Parse(stockStr);
                     producto.StockMin = int.Parse(stockMinStr);
                     producto.StockMax = int.Parse(stockMaxStr);
-                    producto.Barcode = string.IsNullOrEmpty(barcode) ? null : barcode;
+                    producto.Precio = decimal.Parse(precioStr);
+                    producto.UpdatedAt = DateTime.Now;
 
                     if (UIHelper.Confirmar("¿Confirma estos cambios?"))
                     {
@@ -223,7 +266,11 @@ namespace sgi_app.application.ui
             
             try
             {
-                var id = UIHelper.SolicitarEntrada("Ingrese el ID del producto a eliminar");
+                // Mostrar lista de productos disponibles
+                MostrarListaProductos("Productos Disponibles para Eliminar");
+                Console.WriteLine("\nSeleccione el ID del producto que desea eliminar:");
+                
+                var id = UIHelper.SolicitarEntrada("ID del producto");
                 var producto = _context.Productos.Find(id);
 
                 if (producto != null)
@@ -235,6 +282,7 @@ namespace sgi_app.application.ui
                     Console.WriteLine($"Stock: {producto.Stock}");
                     Console.WriteLine($"Stock Min: {producto.StockMin}");
                     Console.WriteLine($"Stock Max: {producto.StockMax}");
+                    Console.WriteLine($"Precio: {producto.Precio:C2}");
                     
                     if (UIHelper.Confirmar("¿Está seguro que desea eliminar este producto?"))
                     {

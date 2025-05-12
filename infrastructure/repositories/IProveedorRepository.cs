@@ -10,10 +10,10 @@ namespace sgi_app.infrastructure.repositories
     public interface IProveedorRepository
     {
         IEnumerable<Proveedor> GetAll();
-        Proveedor GetById(string id);
+        Proveedor GetById(int id);
         void Add(Proveedor proveedor);
         void Update(Proveedor proveedor);
-        void Delete(string id);
+        void Delete(int id);
     }
 
     public class ProveedorRepository : IProveedorRepository
@@ -30,7 +30,7 @@ namespace sgi_app.infrastructure.repositories
             return _context.Proveedores.ToList();
         }
 
-        public Proveedor GetById(string id)
+        public Proveedor GetById(int id)
         {
             return _context.Proveedores.Find(id);
         }
@@ -54,7 +54,7 @@ namespace sgi_app.infrastructure.repositories
             _context.SaveChanges();
         }
 
-        public void Delete(string id)
+        public void Delete(int id)
         {
             var proveedor = GetById(id);
             if (proveedor != null)
